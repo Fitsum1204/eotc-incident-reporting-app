@@ -13,7 +13,7 @@ import { Incident } from '@/sanity/types';
 export default function AdminIncidentsPage() {
  
   const [incidents, setIncidents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =  useState(true);
 
   // Track previous incident IDs to detect NEW incidents
   const previousIncidentIdsRef = useRef<Set<string>>(new Set());
