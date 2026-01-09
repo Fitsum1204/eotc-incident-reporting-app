@@ -1,5 +1,5 @@
 'use client';
-import { useNotifications } from '@/hooks/use-push-notifications';
+
 import { useEffect, useState, useRef } from 'react';
 import { DataTable } from '../../app/tabel/data-table';
 import { columns } from '../../app/tabel/columns';
@@ -11,7 +11,7 @@ import IncidentMapClient from '@/components/shared/IncidentMapClient';
 import { Incident } from '@/sanity/types';
 
 export default function AdminIncidentsPage() {
-  const { notify, permission } = useNotifications();
+ 
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
