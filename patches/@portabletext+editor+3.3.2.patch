@@ -1,0 +1,46 @@
+diff --git a/node_modules/@portabletext/editor/lib/index.js b/node_modules/@portabletext/editor/lib/index.js
+index 93120b0..59f8266 100644
+--- a/node_modules/@portabletext/editor/lib/index.js
++++ b/node_modules/@portabletext/editor/lib/index.js
+@@ -1,29 +1,29 @@
+ import { jsx, jsxs, Fragment as Fragment$1 } from "react/jsx-runtime";
+ import { c } from "react-compiler-runtime";
+ import { useSelector, useActorRef } from "@xstate/react";
+-import noop from "lodash/noop.js";
++import noop from "lodash/noop.js.js";
+ import React, { forwardRef, useContext, createContext, useReducer, useLayoutEffect, useEffect, useCallback, useState, useRef, useMemo, Component, Fragment, memo, startTransition } from "react";
+-import debounce from "lodash/debounce";
+-import throttle from "lodash/throttle";
++import debounce from "lodash/debounce.js.js"
++import throttle from "lodash/throttle.js";
+ import debug$i from "debug";
+ import { getBlockEndPoint, getBlockStartPoint, getBlockKeyFromSelectionPoint, isSelectionCollapsed, isEqualSelectionPoints, getChildKeyFromSelectionPoint, blockOffsetToSpanSelectionPoint, defaultKeyGenerator, parseBlocks, parseBlock, parseAnnotation, parseMarkDefs, parseSpan, parseInlineObject, isKeyedSegment, isListBlock, isTypedObject, getSelectionStartPoint, getSelectionEndPoint } from "./_chunks-es/util.slice-blocks.js";
+-import isEqual from "lodash/isEqual.js";
++import isEqual from "lodash/isEqual.js.js";
+ import { isTextBlock, isSpan, compileSchema } from "@portabletext/schema";
+ import { defineSchema } from "@portabletext/schema";
+ import { isEmptyTextBlock, sliceTextBlock, getTextBlockText } from "./_chunks-es/util.slice-text-block.js";
+ import { getFocusInlineObject, isSelectionCollapsed as isSelectionCollapsed$1, getFocusTextBlock, getFocusSpan as getFocusSpan$1, getSelectedBlocks, isSelectionExpanded, getSelectionStartBlock, getSelectionEndBlock, isOverlappingSelection, getFocusBlock as getFocusBlock$1, isSelectingEntireBlocks, getSelectedValue, getActiveDecorators, isActiveAnnotation, getCaretWordSelection, getFocusBlockObject, getPreviousBlock, getNextBlock, getMarkState, getActiveAnnotationsMarks, isAtTheEndOfBlock, isAtTheStartOfBlock, getFirstBlock as getFirstBlock$1, getLastBlock as getLastBlock$1, getFocusListBlock, getSelectionStartPoint as getSelectionStartPoint$1, getSelectionEndPoint as getSelectionEndPoint$1, isActiveDecorator, getFocusChild as getFocusChild$1, getActiveAnnotations, getSelectedTextBlocks, isActiveListItem, isActiveStyle } from "./_chunks-es/selector.is-at-the-start-of-block.js";
+ import { defineBehavior, forward, raise, effect } from "./behaviors/index.js";
+-import uniq from "lodash/uniq.js";
++import uniq from "lodash/uniq.js.js";
+ import { setup, fromCallback, assign, and, enqueueActions, emit, assertEvent, raise as raise$1, not, createActor } from "xstate";
+ import { compileSchemaDefinitionToPortableTextMemberSchemaTypes, createPortableTextMemberSchemaTypes, portableTextMemberSchemaTypesToSchema } from "@portabletext/sanity-bridge";
+ import { htmlToBlocks } from "@portabletext/block-tools";
+ import { toHTML } from "@portabletext/to-html";
+ import { markdownToPortableText, portableTextToMarkdown } from "@portabletext/markdown";
+ import { Schema } from "@sanity/schema";
+-import flatten from "lodash/flatten.js";
++import flatten from "lodash/flatten.js.js";
+ import { set, applyAll, unset, insert, setIfMissing, diffMatchPatch as diffMatchPatch$1 } from "@portabletext/patches";
+ import { createKeyboardShortcut, code, underline, italic, bold, undo, redo } from "@portabletext/keyboard-shortcuts";
+-import isPlainObject from "lodash/isPlainObject.js";
++import isPlainObject from "lodash/isPlainObject.js.js";
+ import { EditorContext as EditorContext$1 } from "./_chunks-es/use-editor.js";
+ import { useEditor } from "./_chunks-es/use-editor.js";
+ import { Subject } from "rxjs";
+@@ -21573,3 +21573,4 @@ export {
+   usePortableTextEditorSelection
+ };
+ //# sourceMappingURL=index.js.map
++

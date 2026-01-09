@@ -1,0 +1,110 @@
+[
+  {
+    "_type": "incident",
+    "_id": "incident-001",
+    "title": "Arson Attack on St. George Church, Amhara Region",
+    "description": "Unidentified individuals set fire to the historical perimeter of the St. George church at midnight. Local residents managed to extinguish the flames before they reached the inner sanctum.",
+    "category": "Fire",
+    "location": "Gondar, Amhara Region",
+    "date": "2024-03-12",
+    "verification": "verified",
+    "author": { "_type": "reference", "_ref": "user-admin-01" },
+    "mainImage": {
+      "_type": "image",
+      "asset": { "_type": "reference", "_ref": "image-abc12345-1200x800-jpg" }
+    },
+    "attachments": [
+      {
+        "_type": "image",
+        "_key": "att-1",
+        "asset": { "_type": "reference", "_ref": "image-def67890-1200x800-jpg" }
+      }
+    ]
+  },
+  {
+    "_type": "incident",
+    "_id": "incident-002",
+    "title": "Abduction of Pilgrims near Waldeba Monastery",
+    "description": "A group of 15 pilgrims traveling on foot were intercepted by armed gunmen. Their whereabouts remain unknown as of this report.",
+    "category": "Abduction",
+    "location": "Tegede, Ethiopia",
+    "date": "2024-05-20",
+    "verification": "pending",
+    "author": { "_type": "reference", "_ref": "user-reporter-05" },
+    "attachments": [
+      {
+        "_type": "file",
+        "_key": "att-2",
+        "asset": { "_type": "reference", "_ref": "file-xyz999-pdf" }
+      }
+    ]
+  },
+  {
+    "_type": "incident",
+    "_id": "incident-003",
+    "title": "Vandalism and Mass Killing in Oromia Zone",
+    "description": "Reports indicate a violent targeted attack on a settlement resulting in several casualties and the destruction of three community chapels.",
+    "category": "Mass Killing",
+    "location": "Shashemene, Oromia Region",
+    "date": "2024-01-15",
+    "verification": "verified",
+    "author": { "_type": "reference", "_ref": "user-admin-01" },
+    "mainImage": {
+      "_type": "image",
+      "asset": { "_type": "reference", "_ref": "image-ghi456-1200x800-jpg" }
+    }
+  },
+  {
+    "_type": "incident",
+    "_id": "incident-004",
+    "title": "Attempted Fire Damage at Addis Ababa Cathedral",
+    "description": "Suspected arson attempt during the Meskel festival preparations. Security intervened promptly.",
+    "category": "Fire",
+    "location": "Bole, Addis Ababa",
+    "date": "2024-09-10",
+    "verification": "rejected",
+    "author": { "_type": "reference", "_ref": "user-reporter-09" },
+    "description": "Investigation revealed the smoke was caused by an electrical short circuit, not an intentional attack."
+  },
+  {
+    "_type": "incident",
+    "_id": "incident-005",
+    "title": "Abduction of Deacons from Rural Parish",
+    "description": "Two deacons were taken from their residences late at night. Local authorities are investigating potential ransom motives.",
+    "category": "Abduction",
+    "location": "South Wollo",
+    "date": "2024-06-02",
+    "verification": "pending",
+    "author": { "_type": "reference", "_ref": "user-reporter-12" },
+    "attachments": [
+      {
+        "_type": "image",
+        "_key": "att-5a",
+        "asset": { "_type": "reference", "_ref": "image-jkl111-jpg" }
+      },
+      {
+        "_type": "image",
+        "_key": "att-5b",
+        "asset": { "_type": "reference", "_ref": "image-mno222-jpg" }
+      }
+    ]
+  },
+  {
+    "_type": "incident",
+    "_id": "incident-006",
+    "title": "Property Destruction in Benishangul-Gumuz",
+    "description": "Large scale destruction of farmland and storage facilities belonging to the local EOTC diocese.",
+    "category": "Mass Killing",
+    "location": "Metekel Zone",
+    "date": "2024-02-28",
+    "verification": "verified",
+    "author": { "_type": "reference", "_ref": "user-admin-01" },
+    "attachments": [
+      {
+        "_type": "file",
+        "_key": "att-6",
+        "asset": { "_type": "reference", "_ref": "file-report-doc" }
+      }
+    ]
+  }
+]
