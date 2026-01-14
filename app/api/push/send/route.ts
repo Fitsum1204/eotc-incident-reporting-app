@@ -8,8 +8,12 @@ webpush.setVapidDetails(
 );
 
 export async function POST(req: NextRequest) {
+  console.log('📩 /api/push/send called')
   const { subscription, payload } = await req.json();
-
+console.log(
+  '🚀 Sending push to:',
+  subscription?.endpoint
+)
   await webpush.sendNotification(
     subscription,
     JSON.stringify({
@@ -18,6 +22,6 @@ export async function POST(req: NextRequest) {
       data: { url: payload.url },
     })
   );
-
+console.log('✅ Push sent successfully')
   return NextResponse.json({ success: true });
 }

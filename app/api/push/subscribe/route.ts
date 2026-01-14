@@ -34,7 +34,15 @@ export async function POST(request: NextRequest) {
     try {
       const userId = session.user.id;
       if (userId) {
-        await writeClient.patch(userId).set({ webPushSubscription: subscription }).commit();
+              await writeClient.create({
+          _type: 'pushSubscription',
+          role: 'admin',
+          user: {
+            _type: 'reference',
+            _ref: userId,
+          },
+          subscription,
+        });
       }
     } catch (err) {
       console.error('Error saving subscription to Sanity:', err);
