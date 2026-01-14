@@ -53,7 +53,10 @@ export const NavContent = (props: NavContentProps) => {
   ];
 
   return (
-    <div className='flex items-center gap-5 text-black relative'>
+    <div
+      suppressHydrationWarning
+      className='flex items-center gap-5 text-black relative'
+    >
       {/* Desktop Navigation  */}
       {session && session.user ? (
         <>
@@ -102,11 +105,11 @@ export const NavContent = (props: NavContentProps) => {
         </>
       ) : (
         /* Login Button */
-        <Link href="/login">
-  <button className="cursor-pointer m-4 text-white bg-black rounded-full px-4 py-2 hover:bg-gray-800 transition">
-    Login
-  </button>
-</Link>
+        <Link href='/login'>
+          <button className='cursor-pointer m-4 text-white bg-black rounded-full px-4 py-2 hover:bg-gray-800 transition'>
+            Login
+          </button>
+        </Link>
       )}
 
       {/*  Mobile Menu Dropdown */}
@@ -133,9 +136,9 @@ export const NavContent = (props: NavContentProps) => {
                 <span>{link.label}</span>
               </Link>
             ))}
-            <div className="flex items-center gap-3 p-3">
+            <div className='flex items-center gap-3 p-3'>
               <NotificationButton />
-              <span className="text-gray-700">Push Notifications</span>
+              <span className='text-gray-700'>Push Notifications</span>
             </div>
 
             {/* Logout Link in Mobile Menu */}

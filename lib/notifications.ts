@@ -30,11 +30,14 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
     const registration = await navigator.serviceWorker.ready;
 
     // Subscribe to push
+    const vapidKey = urlBase64ToUint8Array(
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
+    );
+
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(
-        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-      ),
+      // Use the underlying ArrayBuffer to match the expected type
+      applicationServerKey: vapidKey.buffer as ArrayBuffer,
     });
 
     return subscription;
@@ -82,3 +85,4 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   }
   return outputArray;
 }
+

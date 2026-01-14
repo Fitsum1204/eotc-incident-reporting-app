@@ -28,7 +28,7 @@ export const Navbar = async() => {
                 
                
                 <NavContent 
-                    session={session} 
+                    session={session as any} 
                     onSignOut={serverSignOut} 
                     onSignIn={serverSignIn} 
                 />

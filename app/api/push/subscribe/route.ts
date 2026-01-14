@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import webpush from 'web-push';
 import { auth } from '@/auth';
+import { writeClient } from '@/sanity/lib/write-client';
 
 // Configure VAPID
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || '';
@@ -29,13 +30,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid subscription' }, { status: 400 });
     }
 
-    // Store subscription in your database (Sanity, MongoDB, etc.)
-    // For now, we'll just validate it
-    // TODO: Save subscription to database with user ID
-    
-    return NextResponse.json({ 
+    // Store subscription in Sanity on the user document
+    try {
+      const userId = session.user.id;
+      if (userId) {
+        await writeClient.patch(userId).set({ webPushSubscription: subscription }).commit();
+      }
+    } catch (err) {
+      console.error('Error saving subscription to Sanity:', err);
+      // continue — we don't want to fail the subscription flow for DB errors
+    }
+
+    return NextResponse.json({
       success: true,
-      message: 'Subscription saved successfully' 
+      message: 'Subscription saved successfully',
     });
   } catch (error) {
     console.error('Error saving subscription:', error);

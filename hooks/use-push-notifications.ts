@@ -43,7 +43,7 @@ export function usePushNotifications() {
     options?: { body?: string; tag?: string; data?: any }
   ) => {
     // In-app toast
-    toast(title, { description: options?.body });
+    toast(`${title}`, { description: `${options?.body}` });
 
     // Browser notification via service worker
     try {

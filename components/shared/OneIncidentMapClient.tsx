@@ -15,7 +15,7 @@ type Props = {
   zoom?: number;
 };
 export default function  OneIncidentMapClient(props: Props) {
-  return <OneIncidentMap  {...props} />
+  return <OneIncidentMap  {...(props as any)} />
 }
 
 

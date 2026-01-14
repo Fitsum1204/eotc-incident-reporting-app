@@ -16,5 +16,5 @@ type Props = {
 };
 
 export default function  IncidentMapClient(props: Props) {
-  return <IncidentMap  {...props} />
+  return <IncidentMap {...(props as any)} />
 }

@@ -7,7 +7,6 @@ import { ServiceWorkerRegistration } from '@/components/shared/ServiceWorkerRegi
 /* 
 import "leaflet/dist/leaflet.css" */
 
-
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -22,7 +21,6 @@ export const metadata: Metadata = {
   title: 'Incident Reporting App',
   description: 'Report and manage community incidents',
   manifest: '/manifest.json',
-  themeColor: '#000000',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -40,18 +38,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang='en'> 
+    <html lang='en'>
       <body
         suppressHydrationWarning
         className={`${geistSans.variable} ${geistMono.variable} 
         `}
       >
-       <ServiceWorkerRegistration />
-        <Providers >
-            {children}
-        </Providers>
+        <ServiceWorkerRegistration />
+        <Providers>{children}</Providers>
         <Toaster />
-      
       </body>
     </html>
   );

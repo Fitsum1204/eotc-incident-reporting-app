@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 //import { USER_BY_EMAIL_QUERY } from "./sanity/lib/queries";
 //const ADMIN_EMAILS = ["fitsum1204@gmail.com"];
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days in seconds (Total lifetime)

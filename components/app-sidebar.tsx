@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import * as React from "react"
+import * as React from 'react';
 import {
   AudioWaveform,
   BookOpen,
@@ -12,33 +12,32 @@ import {
   PieChart,
   Settings2,
   SquareTerminal,
-} from "lucide-react"
+} from 'lucide-react';
 
-import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
-import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
+import { NavMain } from '@/components/nav-main';
+import { NavProjects } from '@/components/nav-projects';
+import { NavUser } from '@/components/nav-user';
+import { TeamSwitcher } from '@/components/team-switcher';
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
 // This is sample data.
 const data = {
   user: {
-    name: "Admin",
-    email: "m@example.com",
-    url: "/",
-    avatar: "/avatars/shadcn.jpg",
+    name: 'Admin',
+    email: 'm@example.com',
+    url: '/',
+    avatar: '/logo.png',
   },
   teams: [
     {
-      name: "EOTC IR",
+      name: 'EOTC IR',
       logo: GalleryVerticalEnd,
-     
     },
     /* {
       name: "Acme Corp.",
@@ -53,8 +52,8 @@ const data = {
   ],
   navMain: [
     {
-      title: "Dashboard",
-      url: "/admin",
+      title: 'Dashboard',
+      url: '/admin',
       icon: SquareTerminal,
       isActive: true,
       /* items: [
@@ -72,27 +71,25 @@ const data = {
         },
       ], */
     },
-   
+
     {
-      title: "Incidents",
-      url: "/admin/incident",
+      title: 'Incidents',
+      url: '/admin/incident',
       icon: BookOpen,
       items: [
         /* {
           title: "All Incidents",
            url: "/admin/incident",
         }, */
-       /*  {
+        /*  {
           title: "manage Incident",
           url: "#",
         }, */
-        
-        
       ],
     },
     {
-      title: "Users",
-      url: "/admin/user",
+      title: 'Users',
+      url: '/admin/user',
       icon: Settings2,
       items: [
         /* {
@@ -103,10 +100,8 @@ const data = {
           title: "manage Users",
           url: "#",
         }, */
-       
       ],
     },
-     
   ],
   title: [
     /* {
@@ -114,7 +109,7 @@ const data = {
       url: "#",
       icon: Frame,
     }, */
-   /*  {
+    /*  {
       name: "Edit",
       url: "#",
       icon: PieChart,
@@ -125,13 +120,13 @@ const data = {
       icon: Map,
     }, */
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props}>
       <SidebarHeader>
-       <TeamSwitcher teams={data.teams} />
+        <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
@@ -142,5 +137,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
