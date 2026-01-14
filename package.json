@@ -6,12 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "typegen": "sanity schema extract --path=./sanity/extract.json && sanity typegen generate",
-    "typegen:watch": "npm run typegen -- --watch",
-    "prebuild": "npm run typegen",
-    "start-typegen-manual": "npm run typegen",
-    "postinstall": "patch-package"
+    "lint": "eslint"
+  
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",

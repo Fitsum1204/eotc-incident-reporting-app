@@ -106,13 +106,6 @@ export type User = {
   provider?: string;
   isActive?: boolean;
   role?: "admin" | "user";
-  webPushSubscription?: {
-    endpoint?: string;
-    keys?: {
-      p256dh?: string;
-      auth?: string;
-    };
-  };
 };
 
 export type SanityImagePaletteSwatch = {
