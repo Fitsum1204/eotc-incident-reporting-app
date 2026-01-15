@@ -76,7 +76,7 @@ const [stats, setStats] = useState<any>(null);
   }, []);
 
   // Second useEffect: Poll for NEW incidents and notify
-  useEffect(() => {
+ /*  useEffect(() => {
     if (permission === 'denied') return;
 
     const checkNewIncidents = async () => {
@@ -124,7 +124,7 @@ const [stats, setStats] = useState<any>(null);
     const interval = setInterval(checkNewIncidents, 30_000);
 
     return () => clearInterval(interval);
-  }, [notify, permission]);
+  }, [notify, permission]); */
 
   const handleUpdateStatus = async (
     id: string,

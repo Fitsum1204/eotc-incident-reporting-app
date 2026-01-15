@@ -6,7 +6,7 @@ import { writeClient } from "@/sanity/lib/write-client";
 import { v4 as uuidv4 } from 'uuid';
 
 // Notify subscribed admins about a new incident
-async function notifyAdminsAboutNewIncident(incidentData:  any) {
+/* async function notifyAdminsAboutNewIncident(incidentData:  any) {
   try {
     // Try common subscription document shapes in Sanity. Adjust queries to match your schema.
     let adminSubscriptions: any[] = await writeClient.fetch(
@@ -52,7 +52,39 @@ async function notifyAdminsAboutNewIncident(incidentData:  any) {
   } catch (error) {
     console.error('Error sending admin notifications:', error);
   }
+} */
+async function notifyAdminsAboutNewIncident(incident: any) {
+  const subs = await writeClient.fetch(
+    '*[_type=="pushSubscription" && role=="admin"]{subscription}'
+  );
+
+  if (!subs?.length) return;
+
+  await Promise.allSettled(
+    subs.map(async ({ subscription }) => {
+      try {
+        await fetch(`${process.env.NEXTAUTH_URL}/api/push/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          cache: 'no-store',
+          body: JSON.stringify({
+            subscription,
+            payload: {
+              title: '🚨 New Incident Reported',
+              body: incident.title,
+              url: `/admin/incident/${incident._id}`,
+              tag: 'incident',
+            },
+          }),
+        });
+      } catch (err) {
+        console.error('Push send failed:', err);
+      }
+    })
+  );
 }
+
+
 export const createPitch = async (state: any, form: FormData) => {
   const session = await auth();
 

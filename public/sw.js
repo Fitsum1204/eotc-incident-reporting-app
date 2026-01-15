@@ -21,6 +21,7 @@ self.addEventListener('push', (event) => {
       ...data.data,
     },
     requireInteraction: Boolean(data.requireInteraction),
+    requireInteraction: true,
     actions: data.actions || [],
   };
 

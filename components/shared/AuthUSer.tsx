@@ -49,7 +49,7 @@ export default function AdminIncidentsPage() {
   }, []);
 
   // Second useEffect: Poll for NEW incidents and notify
-  useEffect(() => {
+ /*  useEffect(() => {
     // Don't poll if notifications aren't supported or permission is denied
     if (permission === 'denied') {
       console.log('Notification permission denied, skipping polling');
@@ -101,7 +101,7 @@ export default function AdminIncidentsPage() {
     const interval = setInterval(checkNewIncidents, 30000);
 
     return () => clearInterval(interval);
-  }, [notify, permission]); // ✅ Include notify and permission in dependencies
+  }, [notify, permission]); */ // ✅ Include notify and permission in dependencies
 
   const handleUpdateStatus = async (
     id: string,
