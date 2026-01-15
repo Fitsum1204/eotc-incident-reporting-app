@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { parseServerActionResponse } from "@/lib/utils";
 import { writeClient } from "@/sanity/lib/write-client";
 import { v4 as uuidv4 } from 'uuid';
-
+import webpush from 'web-push';
 // Notify subscribed admins about a new incident
 /* async functiapplicationServerKey: vapidKey,on notifyAdminsAboutNewIncident(incidentData:  any) {
   try {
@@ -53,7 +53,14 @@ import { v4 as uuidv4 } from 'uuid';
     console.error('Error sending admin notifications:', error);
   }
 } */
-async function notifyAdminsAboutNewIncident(incident: any) {
+if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+  webpush.setVapidDetails(
+    'mailto:forfreef@gmail.com',
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  );
+}
+/* async function notifyAdminsAboutNewIncident(incident: any) {
   const subs = await writeClient.fetch(
     '*[_type=="pushSubscription" && role=="admin"]{subscription}'
   );
@@ -82,9 +89,47 @@ async function notifyAdminsAboutNewIncident(incident: any) {
       }
     })
   );
+} */
+
+async function notifyAdminsAboutNewIncident(incidentData: any) {
+  try {
+    // 1. Fetch all admin subscriptions from Sanity
+    const adminSubscriptions = await writeClient.fetch(
+      `*[_type == "pushSubscription" && role == "admin"]{subscription}`
+    );
+
+    if (!adminSubscriptions || adminSubscriptions.length === 0) return;
+
+    // 2. Send to each subscription directly using webpush (Server-to-Push-Service)
+    const notificationPromises = adminSubscriptions.map(async (doc: any) => {
+      const sub = doc.subscription;
+      if (!sub || !sub.endpoint) return;
+
+      try {
+        return await webpush.sendNotification(
+          sub,
+          JSON.stringify({
+            title: '🚨 New Incident Reported',
+            body: `${incidentData.title} at ${incidentData.location}`,
+            data: { 
+                url: `/admin/incident/${incidentData._id}` 
+            },
+          })
+        );
+      } catch (err: any) {
+        // If subscription is expired/invalid, delete it from Sanity
+        if (err.statusCode === 404 || err.statusCode === 410) {
+          console.log("Removing expired subscription");
+          // Add logic to delete stale sub if needed
+        }
+      }
+    });
+
+    await Promise.all(notificationPromises);
+  } catch (error) {
+    console.error('Push notification error:', error);
+  }
 }
-
-
 export const createPitch = async (state: any, form: FormData) => {
   const session = await auth();
 
