@@ -61,7 +61,7 @@ async function notifyAdminsAboutNewIncident(incident: any) {
   if (!subs?.length) return;
 
   await Promise.allSettled(
-    subs.map(async ({ subscription }) => {
+    subs.map(async ({ subscription }: { subscription: any }) => {
       try {
         await fetch(`${process.env.NEXTAUTH_URL}/api/push/send`, {
           method: 'POST',
