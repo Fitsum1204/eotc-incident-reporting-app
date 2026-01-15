@@ -10,7 +10,7 @@ const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || '';
 
 if (vapidPublicKey && vapidPrivateKey) {
   webpush.setVapidDetails(
-    'mailto:your-email@example.com', // Change this to your contact email
+    'mailto:forfreef@gmail.com', 
     vapidPublicKey,
     vapidPrivateKey
   );
