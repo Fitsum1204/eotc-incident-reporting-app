@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         tag: payload.tag,
       })
     );
-
+ console.log('✅ PUSH SENT');
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('❌ Push failed:', err?.statusCode, err?.body);

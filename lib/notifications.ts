@@ -37,7 +37,7 @@ export async function subscribeToPushNotifications(): Promise<PushSubscription |
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       // Use the underlying ArrayBuffer to match the expected type
-      applicationServerKey: vapidKey.buffer as ArrayBuffer,
+      //applicationServerKey: vapidKey.buffer as ArrayBuffer,
     });
 
     return subscription;
