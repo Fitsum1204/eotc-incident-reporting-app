@@ -6,7 +6,7 @@ import { writeClient } from "@/sanity/lib/write-client";
 import { v4 as uuidv4 } from 'uuid';
 
 // Notify subscribed admins about a new incident
-async function notifyAdminsAboutNewIncident(incidentData: any) {
+async function notifyAdminsAboutNewIncident(incidentData:  any) {
   try {
     // Try common subscription document shapes in Sanity. Adjust queries to match your schema.
     let adminSubscriptions: any[] = await writeClient.fetch(
