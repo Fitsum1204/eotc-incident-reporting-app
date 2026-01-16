@@ -11,6 +11,7 @@ import {
 } from '@/sanity/lib/queries';
 
 import { auth } from '@/auth';
+export const revalidate = 0;
 export default async function Home({
   searchParams,
 }: {
