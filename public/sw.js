@@ -12,14 +12,14 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
+    icon:  '/maskable-icon.png',
+    badge: '/maskable-icon.png',
     tag: data.tag || 'default',
     data: {
       url: data.data?.url || '/',
       ...data.data,
     },
-    
+   // requireInteraction: Boolean(data.requireInteraction),
     requireInteraction: true,
     actions: data.actions || [],
   };
