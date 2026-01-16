@@ -7,12 +7,13 @@
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
-
+import {BulkDelete} from 'sanity-plugin-bulk-delete'
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {apiVersion, dataset, projectId} from './sanity/env'
 import {schema} from './sanity/schemaTypes'
 import {structure} from './sanity/structure'
-
+import {incident} from './sanity/schemaTypes/incident'
+import {user} from './sanity/schemaTypes/user'
 export default defineConfig({
   basePath: '/studio',
   projectId,
@@ -24,5 +25,9 @@ export default defineConfig({
     // Vision is for querying with GROQ from inside the Studio
     // https://www.sanity.io/docs/the-vision-plugin
     visionTool({defaultApiVersion: apiVersion}),
+     BulkDelete({
+      schemaTypes: [incident,user],  // Pass your schema types here
+      // roles: ['administrator', 'editor'], // Optionally restrict to specific roles
+    }),
   ],
 })
