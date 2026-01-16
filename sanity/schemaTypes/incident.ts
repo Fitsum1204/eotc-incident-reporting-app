@@ -40,7 +40,8 @@ export const incident = defineType({
         { type: 'image' },
         { type: 'file' }
       ]
-    }), defineField({
+    }), 
+    defineField({
       name: "locationPoint",
       title: "Coordinates",
       type: "geopoint", 

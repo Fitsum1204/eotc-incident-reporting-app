@@ -11,6 +11,7 @@ import { incidentReportSchema } from '@/lib/validation';
 import { createPitch } from '@/lib/actions';
 import emailjs from '@emailjs/browser';
 import LocationPicker from './LocationPicker';
+import {compressImage} from '@/lib/utils'
 type Preview = {
   id: string;
   file: File;
@@ -26,7 +27,7 @@ const IncidentReportForm = () => {
   const router = useRouter();
 
   // === 1. File selection handler ===
-  const handleFilesSelected = (files: FileList | null) => {
+ /*  const handleFilesSelected = (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     const newPreviews: Preview[] = [];
@@ -47,8 +48,41 @@ const IncidentReportForm = () => {
     });
 
     setPreviews((prev) => [...prev, ...newPreviews]);
-  };
+  }; */
+const handleFilesSelected = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
+    setIsPending(true); // Show a loading state while compressing
+    const newPreviews: Preview[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        // Only allow images
+        if (!file.type.startsWith('image/')) {
+          toast.error(`File "${file.name}" is not an image and was skipped.`);
+          continue;
+        }
+
+        // Compress the image before creating the preview
+        toast.info(`Processing ${file.name}...`, { duration: 1000 });
+        const processedFile = await compressImage(file);
+
+        const url = URL.createObjectURL(processedFile);
+        newPreviews.push({
+          id: `${processedFile.name}-${Date.now()}-${Math.random()}`,
+          file: processedFile,
+          url,
+        });
+      }
+
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    } catch (err) {
+      console.error("Compression error:", err);
+      toast.error("Failed to process images. Try a smaller file.");
+    } finally {
+      setIsPending(false);
+    }
+  };
   // === 2. Remove preview ===
   const removePreview = (id: string) => {
     setPreviews((prev) => {

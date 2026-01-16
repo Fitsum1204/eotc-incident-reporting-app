@@ -110,7 +110,7 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
           sub,
           JSON.stringify({
             title: '🚨 New Incident Reported',
-            body: `${incidentData.title} at ${incidentData.location}`,
+            body: `${incidentData.title} at ${incidentData.location} `,
             data: { 
                 url: `/admin/incident/${incidentData._id}` 
             },
@@ -139,7 +139,7 @@ export const createPitch = async (state: any, form: FormData) => {
       status: "ERROR",
     });
   }
-  const reporterEmail = session.user.email || null; // Google always provides email
+  const reporterEmail = session.user.email || null; 
   const reporterName = session.user.name || "Anonymous Reporter";
   const reporterImage = session.user.image || null;
   const title = form.get("title") as string;
@@ -221,7 +221,7 @@ export const createPitch = async (state: any, form: FormData) => {
 
     return parseServerActionResponse({
      ...incident,
-      reporterEmail,        // Important: send email back to client
+      reporterEmail,        
       reporterName,
       status: "SUCCESS",
       error: "",

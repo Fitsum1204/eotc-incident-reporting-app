@@ -1,4 +1,3 @@
-// public/sw.js
 
 self.addEventListener('push', (event) => {
   let data = {};
@@ -13,8 +12,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/logo.png',
+    badge: '/logo.png',
     tag: data.tag || 'default',
     data: {
       url: data.data?.url || '/',
