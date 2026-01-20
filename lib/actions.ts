@@ -114,7 +114,7 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
             data: { 
                 url: `/admin/incident/${incidentData._id}` 
             },
-            tag: incidentData._id,
+           
           })
         );
       } catch (err: any) {
