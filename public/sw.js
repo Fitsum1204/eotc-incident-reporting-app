@@ -19,7 +19,7 @@ self.addEventListener('push', (event) => {
       url: data.data?.url || '/',
       ...data.data,
     },
-    requireInteraction: Boolean(data.requireInteraction),
+    //requireInteraction: Boolean(data.requireInteraction),
     requireInteraction: true,
     actions: data.actions || [],
   };
