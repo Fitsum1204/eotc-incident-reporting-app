@@ -109,7 +109,9 @@ const IncidentReportForm = () => {
         const fieldErrors = error.flatten().fieldErrors;
         const mapped: Record<string, string> = {};
         Object.entries(fieldErrors).forEach(([key, msgs]) => {
-          if (msgs) mapped[key] = msgs.join(', ');
+          if (msgs && Array.isArray(msgs)) {
+            mapped[key] = msgs.join(', ');
+          }
         });
         setErrors(mapped);
         toast.error('Please correct the errors in the form.');

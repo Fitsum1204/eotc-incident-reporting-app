@@ -98,8 +98,8 @@ self.addEventListener('notificationclick', (event) => {
         if ('focus' in client) {
           client.focus();
           // Optional: If you want to force the existing tab to the new URL:
-          return client.navigate(urlToOpen);
-          //return;
+          //return client.navigate(urlToOpen);
+          return;
         }
       }
 
