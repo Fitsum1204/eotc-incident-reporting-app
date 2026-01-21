@@ -24,8 +24,8 @@ self.addEventListener('push', (event) => {
         const previousCount = existingNotification.data?.count || 1;
         count = previousCount + 1;
 
-        title = `🚨 ${count} New Incidents`;
-        body = `Latest: ${pushData.title}`;
+       /*  title = `🚨 ${count} New Incidents`;
+        body = `Latest: ${pushData.title}`; */
       }
 
       const options = {
