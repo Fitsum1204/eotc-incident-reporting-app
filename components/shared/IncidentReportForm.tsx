@@ -220,10 +220,43 @@ const IncidentReportForm = () => {
         </div>
       </div>
 
-      {/* Map and hidden inputs */}
-      <LocationPicker onSelect={(lat, lng) => setCoords({ lat, lng })} />
-      <input type="hidden" name="lat" value={coords?.lat ?? ""} />
-      <input type="hidden" name="lng" value={coords?.lng ?? ""} />
+        {/* Location & Date */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                  Location
+                </label>
+                <Input id="location" name="location" required placeholder="City, parish, or specific place" />
+                {errors.location && <p className="mt-2 text-sm text-red-600">{errors.location}</p>}
+              </div>
+              
+              <div>
+                <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
+                  Date of Incident
+                </label>
+                <Input id="date" name="date" type="date" required />
+                {errors.date && <p className="mt-2 text-sm text-red-600">{errors.date}</p>}
+              </div>
+            </div>
+                <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Location on Map
+                </label>
+              
+                <LocationPicker
+                  onSelect={(lat, lng) => {
+                    setCoords({ lat, lng })
+                  }}
+                />
+              
+                {coords && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    Selected: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+                  </p>
+                )}
+              </div>
+              <input type="hidden" name="lat" value={coords?.lat ?? ""} />
+              <input type="hidden" name="lng" value={coords?.lng ?? ""} />
 
       {/* Submit */}
       <div className="flex items-center gap-4">
