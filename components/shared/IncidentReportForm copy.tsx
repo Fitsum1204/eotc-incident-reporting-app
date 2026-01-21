@@ -11,7 +11,7 @@ import { incidentReportSchema } from '@/lib/validation';
 import { createPitch } from '@/lib/actions';
 import emailjs from '@emailjs/browser';
 import LocationPicker from './LocationPicker';
-
+import {compressImage} from '@/lib/utils'
 type Preview = {
   id: string;
   file: File;
@@ -23,17 +23,13 @@ const IncidentReportForm = () => {
   const [isPending, setIsPending] = useState(false);
   const [previews, setPreviews] = useState<Preview[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
   const router = useRouter();
-const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(null)
 
   // === 1. File selection handler ===
-  const handleFilesSelected = (files: FileList | null) => {
+ /*  const handleFilesSelected = (files: FileList | null) => {
     if (!files || files.length === 0) return;
-if (!coords) {
-  toast.error("Please select a location on the map");
-  setIsPending(false);
-  return;
-}
+
     const newPreviews: Preview[] = [];
 
     Array.from(files).forEach((file) => {
@@ -52,8 +48,41 @@ if (!coords) {
     });
 
     setPreviews((prev) => [...prev, ...newPreviews]);
-  };
+  }; */
+const handleFilesSelected = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
 
+    setIsPending(true); // Show a loading state while compressing
+    const newPreviews: Preview[] = [];
+
+    try {
+      for (const file of Array.from(files)) {
+        // Only allow images
+        if (!file.type.startsWith('image/')) {
+          toast.error(`File "${file.name}" is not an image and was skipped.`);
+          continue;
+        }
+
+        // Compress the image before creating the preview
+        toast.info(`Processing ${file.name}...`, { duration: 1000 });
+        const processedFile = await compressImage(file);
+
+        const url = URL.createObjectURL(processedFile);
+        newPreviews.push({
+          id: `${processedFile.name}-${Date.now()}-${Math.random()}`,
+          file: processedFile,
+          url,
+        });
+      }
+
+      setPreviews((prev) => [...prev, ...newPreviews]);
+    } catch (err) {
+      console.error("Compression error:", err);
+      toast.error("Failed to process images. Try a smaller file.");
+    } finally {
+      setIsPending(false);
+    }
+  };
   // === 2. Remove preview ===
   const removePreview = (id: string) => {
     setPreviews((prev) => {
@@ -86,7 +115,11 @@ if (!coords) {
   const handleFormSubmit = async (formData: FormData) => {
     setIsPending(true);
     setErrors({});
-
+if (!coords) {
+  toast.error("Please select a location on the map");
+  setIsPending(false);
+  return;
+}
     try {
       // Client-side validation
       const formValue = {
@@ -293,7 +326,7 @@ if (!coords) {
           <Input id="location" name="location" required placeholder="City, parish, or specific place" />
           {errors.location && <p className="mt-2 text-sm text-red-600">{errors.location}</p>}
         </div>
-
+        
         <div>
           <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-2">
             Date of Incident
@@ -302,25 +335,25 @@ if (!coords) {
           {errors.date && <p className="mt-2 text-sm text-red-600">{errors.date}</p>}
         </div>
       </div>
-      <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Select Location on Map
-  </label>
-
-  <LocationPicker
-    onSelect={(lat, lng) => {
-      setCoords({ lat, lng })
-    }}
-  />
-
-  {coords && (
-    <p className="mt-2 text-sm text-gray-600">
-      Selected: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
-    </p>
-  )}
-      </div>
-      <input type="hidden" name="lat" value={coords?.lat ?? ""} />
-      <input type="hidden" name="lng" value={coords?.lng ?? ""} />
+          <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Select Location on Map
+          </label>
+        
+          <LocationPicker
+            onSelect={(lat, lng) => {
+              setCoords({ lat, lng })
+            }}
+          />
+        
+          {coords && (
+            <p className="mt-2 text-sm text-gray-600">
+              Selected: {coords.lat.toFixed(5)}, {coords.lng.toFixed(5)}
+            </p>
+          )}
+        </div>
+        <input type="hidden" name="lat" value={coords?.lat ?? ""} />
+        <input type="hidden" name="lng" value={coords?.lng ?? ""} />
       {/* Submit */}
       <div className="flex items-center gap-4">
         <Button
