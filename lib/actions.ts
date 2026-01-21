@@ -106,17 +106,15 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       if (!sub || !sub.endpoint) return;
 
       try {
-        return await webpush.sendNotification(
+              return await webpush.sendNotification(
           sub,
           JSON.stringify({
-            title: '🚨 New Incident Reported',
-            body: `${incidentData.title} at ${incidentData.location} `,
-            data: { 
-                url: `/admin/incident/${incidentData._id}` 
-            },
-           
+            // Send the raw data here
+            incidentTitle: incidentData.title, 
+            location: incidentData.location,
+            url: `/admin/incident/${incidentData._id}`
           })
-        );
+  );
       } catch (err: any) {
         // If subscription is expired/invalid, delete it from Sanity
         if (err.statusCode === 404 || err.statusCode === 410) {

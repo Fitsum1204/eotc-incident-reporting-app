@@ -1,6 +1,10 @@
 
 // self.addEventListener('push', ... in your service-worker.js
 
+
+
+// public/sw.js
+
 self.addEventListener('push', (event) => {
   let pushData = {};
   try {
@@ -13,31 +17,32 @@ self.addEventListener('push', (event) => {
 
   const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
     .then((notifications) => {
+      // Create the text for the FIRST notification
       let title = '🚨 New Incident Reported';
-      let body = pushData.title || 'A new incident was reported.';
+      let body = `${pushData.incidentTitle} at ${pushData.location}`;
       let count = 1;
 
-      // 1. Check if a notification is already visible
+      // Logic for GROUPING if a notification is already visible
       if (notifications.length > 0) {
         const existingNotification = notifications[0];
-        // 2. Retrieve the previous count from the data object
         const previousCount = existingNotification.data?.count || 1;
         count = previousCount + 1;
 
-       /*  title = `🚨 ${count} New Incidents`;
-        body = `Latest: ${pushData.title}`; */
+        title = `🚨 ${count} New Incidents`;
+        body = `Latest: ${pushData.incidentTitle}`; 
       }
 
       const options = {
         body: body,
         icon: '/maskable-icon.png',
         badge: '/maskable-icon.png',
-        tag: GROUP_TAG, // Must be the same to replace the old one
-        renotify: true, // This makes the phone vibrate/beep even if the tag is the same
+        tag: GROUP_TAG,
+        renotify: true,
         requireInteraction: true,
         data: {
-          url: count > 1 ? '/admin/incidents' : (pushData.data?.url || '/'),
-          count: count, // Store the new count for the next push
+          // If 1 incident, go to specific page. If many, go to list.
+          url: count > 1 ? '/admin/incidents' : (pushData.url || '/'),
+          count: count,
         },
       };
 
@@ -47,7 +52,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(promiseChain);
 });
 
-self.addEventListener('notificationclick', (event) => {
+/* self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   const urlToOpen =
@@ -69,8 +74,42 @@ self.addEventListener('notificationclick', (event) => {
       }
     })
   );
-});
+}); */
 
+
+// public/sw.js
+
+self.addEventListener('notificationclick', (event) => {
+  // 1. Close the notification immediately
+  event.notification.close();
+
+  // 2. Get the URL we stored during the 'push' event
+  const urlToOpen = event.notification.data?.url || '/';
+
+  // 3. Handle window management
+  event.waitUntil(
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      // Check if the admin already has a tab open with this site
+      for (const client of clientList) {
+        // If the tab is already on our site, focus it and navigate
+        if ('focus' in client) {
+          client.focus();
+          // Optional: If you want to force the existing tab to the new URL:
+          // return client.navigate(urlToOpen);
+          return;
+        }
+      }
+
+      // If no tabs are open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
 self.addEventListener('notificationclose', (event) => {
   console.log('Notification closed:', event.notification.tag);
 });
