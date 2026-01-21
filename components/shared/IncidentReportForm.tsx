@@ -153,8 +153,44 @@ const IncidentReportForm = () => {
   return (
     <form action={handleFormSubmit} className="w-full max-w-4xl mx-auto bg-[#f9f9f9] my-10 space-y-8 px-8 py-8 rounded-xl shadow">
       <h2 className="text-2xl font-semibold text-gray-900">Report an Incident</h2>
+  {/* Title */}
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+          Incident Title
+        </label>
+        <Input id="title" name="title" required placeholder="Incident Title" />
+        {errors.title && <p className="mt-2 text-sm text-red-600">{errors.title}</p>}
+      </div>
 
-      {/* ... (Keep your Title, Type, and Description inputs exactly as they were) ... */}
+      {/* Type */}
+      <div>
+        <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
+          Type of incident
+        </label>
+        <select id="type" name="type" required className="w-full px-4 py-3 rounded-lg border">
+          <option value="">Select incident type</option>
+          <option value="Fire">Fire</option>
+          <option value="Abduction">Abduction</option>
+          <option value="Mass Killing">Mass Killing</option>
+          <option value="Other">Other</option>
+        </select>
+        {errors.type && <p className="mt-2 text-sm text-red-600">{errors.type}</p>}
+      </div>
+
+      {/* Description */}
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+          Description
+        </label>
+        <Textarea
+          id="description"
+          name="description"
+          required
+          className="min-h-[140px]"
+          placeholder="Describe the incident"
+        />
+        {errors.description && <p className="mt-2 text-sm text-red-600">{errors.description}</p>}
+      </div>
 
       {/* Attachments */}
       <div>
