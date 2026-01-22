@@ -18,7 +18,7 @@ self.addEventListener('push', (event) => {
   const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
     .then((notifications) => {
       // Create the text for the FIRST notification
-      let title = '🚨 New Incident Reported';
+      let title = '🚨 New Incident Reported ';
       let body = `${pushData.incidentTitle} at ${pushData.location}`;
       let count = 1;
 
