@@ -2,8 +2,6 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-
-
 const firebaseConfig = {
   apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
   authDomain: "incident-tracker-cefe9.firebaseapp.com",
@@ -17,60 +15,96 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  console.log('Received background message:', payload);
-
-  // Extract from the 'data' field we sent from the server
-  const { title, body, url } = payload.data;
-  const GROUP_TAG = 'incident-notification-group';
-
-  const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
-    .then((notifications) => {
-      let currentTitle = title;
-      let currentBody = body;
-      let count = 1;
-
-      if (notifications.length > 0) {
-        const existingNotif = notifications[0];
-        count = (existingNotif.data?.count || 1) + 1;
-        currentTitle = `🚨 ${count} New Incidents`;
-        currentBody = `Latest: ${title}`;
-      }
-
-      return self.registration.showNotification(currentTitle, {
-        body: currentBody,
-        tag: GROUP_TAG,
-        renotify: true, // IMPORTANT: Makes phone vibrate/alert even if old notif is there
-        icon: '/maskable-icon.png',
-        badge: '/maskable-icon.png',
-        requireInteraction: true,
-        data: {
-          url: count > 1 ? '/admin/incidents' : url,
-          count: count
-        }
-      });
-    });
-
-  return promiseChain;
+// Force service worker update
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
 });
 
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
+/**
+ * Handle background messages.
+ * We use 'data' payload to manually construct notifications, allowing for
+ * grouping/stacking behavior which isn't possible with auto-display 'notification' payload.
+ */
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+
+  const data = payload.data || {};
+  const GROUP_TAG = 'incident-group';
+
+  // 1. Get existing notifications with this tag
+  const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
+    .then((notifications) => {
+      
+      let title = data.title || '🚨 New Incident Reported';
+      let body = data.body || `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
+      let count = 1;
+
+      // 2. Check if we have existing notifications to group
+      if (notifications.length > 0) {
+        const existingNotification = notifications[0];
+        // Retrieve internal counter from existing notification's data
+        const previousCount = existingNotification.data?.count || 1;
+        count = previousCount + 1;
+
+        title = `🚨 ${count} New Incidents`;
+        body = `Latest: ${data.title}`;
+      }
+
+      // 3. Show the new/updated notification
+      const notificationOptions = {
+        body: body,
+        icon: '/maskable-icon.png',
+        badge: '/maskable-icon.png',
+        tag: GROUP_TAG, // Replaces old notification with same tag
+        renotify: true, // Vibrates/Alerts again
+        requireInteraction: true,
+        data: {
+          url: count > 1 ? '/admin/incidents' : (data.url || '/'),
+          count: count,
+          click_action: data.click_action // standard webpush field
+        }
+      };
+
+      return self.registration.showNotification(title, notificationOptions);
+    });
+
+  // Keep worker alive until notification is shown
+  // Note: onBackgroundMessage doesn't pass 'event' directly in typical API, 
+  // but internally it handles waitUntil. We just return the promise if supported, 
+  // or rely on self.registration.showNotification returning a promise.
+});
+
+// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+
+  // Get URL from data
+  // Logic: If multiple incidents, go to list. If single, go to details.
   const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
-      .then((windowClients) => {
-        // Focus existing tab if available
-        for (let client of windowClients) {
-          if (client.url.includes('/admin') && 'focus' in client) {
-            return client.focus();
-          }
+    clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    }).then((clientList) => {
+      // Focus existing tab if open
+      for (const client of clientList) {
+        if (client.url && 'focus' in client) {
+          return client.focus().then(formattedClient => {
+             // Optional: navigate if URL is different
+             // return formattedClient.navigate(urlToOpen);
+             return formattedClient;
+          });
         }
-        // Otherwise open new
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen);
-        }
-      })
+      }
+      // Otherwise open new window
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
   );
 });
