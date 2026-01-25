@@ -4,12 +4,10 @@ import { auth } from "@/auth";
 import { parseServerActionResponse } from "@/lib/utils";
 import { writeClient } from "@/sanity/lib/write-client";
 import { v4 as uuidv4 } from 'uuid';
+
+// Notify subscribed admins about a new incident
 // lib/actions.ts
 import { getMessaging } from "@/lib/firebase-admin";
-
-// ... (other imports)
-
-
 
 async function notifyAdminsAboutNewIncident(incidentData: any) {
   try {
