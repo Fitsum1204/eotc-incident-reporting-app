@@ -1,7 +1,9 @@
+
+
+
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-/* ================= FIREBASE ================= */
 
 firebase.initializeApp({
   apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
@@ -14,76 +16,27 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-/* ================= INDEXED DB ================= */
-
-const DB_NAME = 'incident-notifications';
-const STORE = 'counter';
-
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      req.result.createObjectStore(STORE);
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-async function getCount() {
-  const db = await openDB();
-  return new Promise((resolve) => {
-    const tx = db.transaction(STORE, 'readonly');
-    const store = tx.objectStore(STORE);
-    const req = store.get('count');
-    req.onsuccess = () => resolve(req.result || 0);
-  });
-}
-
-async function setCount(value) {
-  const db = await openDB();
-  const tx = db.transaction(STORE, 'readwrite');
-  tx.objectStore(STORE).put(value, 'count');
-}
-
-/* ================= SERVICE WORKER LIFECYCLE ================= */
-
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
-
-/* ================= BACKGROUND MESSAGE ================= */
 
 messaging.onBackgroundMessage(async (payload) => {
   const data = payload.data || {};
 
-  const safeTitle = data.title || '🚨 New Incident';
-  const safeBody =
-    data.body ||
-    `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
-
-  let count = (await getCount()) + 1;
-  await setCount(count);
-
-  const title =
-    count === 1 ? safeTitle : `🚨 ${count} New Incidents`;
-
+  const title = data.title || '🚨 New Incident';
   const options = {
-    body: count === 1 ? safeBody : `Latest: ${safeTitle}`,
-    icon: '/maskable-icon.png',
-    badge: '/maskable-icon.png',
-    tag: 'incident-group',
+    body: data.body || 'New incident reported',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    tag: 'incident',
     renotify: true,
     requireInteraction: true,
     data: {
-      url: count > 1 ? '/admin/incidents' : data.url || '/',
-      count,
-    },
+      url: data.url || '/admin/incidents'
+    }
   };
 
   await self.registration.showNotification(title, options);
 });
-
-/* ================= CLICK HANDLER ================= */
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
@@ -92,9 +45,11 @@ self.addEventListener('notificationclick', (event) => {
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientsArr) => {
         for (const client of clientsArr) {
-          if ('focus' in client) return client.focus();
+          if (client.url.includes('/admin') && 'focus' in client) {
+            return client.focus();
+          }
         }
-        return clients.openWindow(event.notification.data?.url || '/');
+        return clients.openWindow(event.notification.data.url);
       })
   );
 });

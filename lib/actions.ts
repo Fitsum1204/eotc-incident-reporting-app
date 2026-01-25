@@ -28,23 +28,21 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       if (!token) return;
 
       try {
-       await messaging.send({
-  token,
-  data: {
-    title: String(incidentData.title || 'New Incident'),
-    body: String(
-      `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown'}`
-    ),
-    location: String(incidentData.location || ''),
-    url: `/admin/incident/${incidentData._id}`,
-  },
-  webpush: {
-    headers: { Urgency: 'high' },
-    fcmOptions: {
-      link: `/admin/incident/${incidentData._id}`,
-    },
-  },
-});
+          await messaging.send({
+          token,
+          data: {
+            title: incidentData.title || 'New Incident',
+            body: `${incidentData.title} at ${incidentData.location}`,
+            url: `/admin/incident/${incidentData._id}`,
+            type: 'NEW_INCIDENT'
+          },
+          webpush: {
+            headers: {
+              Urgency: 'high'
+            }
+          }
+        });
+
 
       } catch (err: any) {
         console.error('FCM send failed for token:', token, err);
