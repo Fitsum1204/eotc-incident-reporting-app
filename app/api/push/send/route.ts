@@ -1,6 +1,5 @@
-// app/api/push/send/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { messaging } from '@/lib/firebase-admin';
+import { getMessaging } from '@/lib/firebase-admin';
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,6 +8,8 @@ export async function POST(req: NextRequest) {
     if (!token) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
     }
+
+    const messaging = getMessaging(); // Initialize lazily
 
     await messaging.send({
         token: token,
