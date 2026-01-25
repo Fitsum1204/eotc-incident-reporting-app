@@ -1,110 +1,100 @@
-// public/sw.js
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-const firebaseConfig = {
+/* ================= FIREBASE ================= */
+
+firebase.initializeApp({
   apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
   authDomain: "incident-tracker-cefe9.firebaseapp.com",
   projectId: "incident-tracker-cefe9",
-  storageBucket: "incident-tracker-cefe9.firebasestorage.app",
+  storageBucket: "incident-tracker-cefe9.appspot.com",
   messagingSenderId: "444851966244",
   appId: "1:444851966244:web:c71dc6ce73d42f231463b1",
-  measurementId: "G-JF8S7H0P3E"
-};
+});
 
-firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Force service worker update
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-});
+/* ================= INDEXED DB ================= */
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(clients.claim());
-});
+const DB_NAME = 'incident-notifications';
+const STORE = 'counter';
 
-/**
- * Handle background messages.
- * We use 'data' payload to manually construct notifications, allowing for
- * grouping/stacking behavior which isn't possible with auto-display 'notification' payload.
- */
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = () => {
+      req.result.createObjectStore(STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
 
+async function getCount() {
+  const db = await openDB();
+  return new Promise((resolve) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const store = tx.objectStore(STORE);
+    const req = store.get('count');
+    req.onsuccess = () => resolve(req.result || 0);
+  });
+}
+
+async function setCount(value) {
+  const db = await openDB();
+  const tx = db.transaction(STORE, 'readwrite');
+  tx.objectStore(STORE).put(value, 'count');
+}
+
+/* ================= SERVICE WORKER LIFECYCLE ================= */
+
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+
+/* ================= BACKGROUND MESSAGE ================= */
+
+messaging.onBackgroundMessage(async (payload) => {
   const data = payload.data || {};
-  const GROUP_TAG = 'incident-group';
 
-  // 1. Get existing notifications with this tag
-  const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
-    .then((notifications) => {
-      
-      let title = data.title || '🚨 New Incident Reported';
-      let body = data.body || `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
-      let count = 1;
+  const safeTitle = data.title || '🚨 New Incident';
+  const safeBody =
+    data.body ||
+    `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
 
-      // 2. Check if we have existing notifications to group
-      if (notifications.length > 0) {
-        const existingNotification = notifications[0];
-        // Retrieve internal counter from existing notification's data
-        const previousCount = existingNotification.data?.count || 1;
-        count = previousCount + 1;
+  let count = (await getCount()) + 1;
+  await setCount(count);
 
-        title = `🚨 ${count} New Incidents`;
-        body = `Latest: ${data.title}`;
-      }
+  const title =
+    count === 1 ? safeTitle : `🚨 ${count} New Incidents`;
 
-      // 3. Show the new/updated notification
-      const notificationOptions = {
-        body: body,
-        icon: '/maskable-icon.png',
-        badge: '/maskable-icon.png',
-        tag: GROUP_TAG, // Replaces old notification with same tag
-        renotify: true, // Vibrates/Alerts again
-        requireInteraction: true,
-        data: {
-          url: count > 1 ? '/admin/incidents' : (data.url || '/'),
-          count: count,
-          click_action: data.click_action // standard webpush field
-        }
-      };
+  const options = {
+    body: count === 1 ? safeBody : `Latest: ${safeTitle}`,
+    icon: '/maskable-icon.png',
+    badge: '/maskable-icon.png',
+    tag: 'incident-group',
+    renotify: true,
+    requireInteraction: true,
+    data: {
+      url: count > 1 ? '/admin/incidents' : data.url || '/',
+      count,
+    },
+  };
 
-      return self.registration.showNotification(title, notificationOptions);
-    });
-
-  // Keep worker alive until notification is shown
-  // Note: onBackgroundMessage doesn't pass 'event' directly in typical API, 
-  // but internally it handles waitUntil. We just return the promise if supported, 
-  // or rely on self.registration.showNotification returning a promise.
+  await self.registration.showNotification(title, options);
 });
 
-// Handle notification clicks
+/* ================= CLICK HANDLER ================= */
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  // Get URL from data
-  // Logic: If multiple incidents, go to list. If single, go to details.
-  const urlToOpen = event.notification.data?.url || '/';
-
   event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true,
-    }).then((clientList) => {
-      // Focus existing tab if open
-      for (const client of clientList) {
-        if (client.url && 'focus' in client) {
-          return client.focus().then(formattedClient => {
-             // Optional: navigate if URL is different
-             // return formattedClient.navigate(urlToOpen);
-             return formattedClient;
-          });
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientsArr) => {
+        for (const client of clientsArr) {
+          if ('focus' in client) return client.focus();
         }
-      }
-      // Otherwise open new window
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
+        return clients.openWindow(event.notification.data?.url || '/');
+      })
   );
 });

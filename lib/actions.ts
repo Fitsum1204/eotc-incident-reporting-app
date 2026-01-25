@@ -28,28 +28,24 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       if (!token) return;
 
       try {
-        await messaging.send({
-          token: token,
-          // Sending ONLY 'data' is critical for the Service Worker to take control
-          // and execute the grouping/stacking logic via onBackgroundMessage.
-          // If 'notification' is included, the OS shows it immediately and ignores grouping.
-          data: {
-            title: incidentData.title || 'New Incident',
-            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
-            location: incidentData.location || '',
-            incidentId: incidentData._id || '',
-            url: `/admin/incident/${incidentData._id}`,
-            click_action: `/admin/incident/${incidentData._id}`,
-          },
-          webpush: {
-            headers: {
-              Urgency: 'high'
-            },
-            fcmOptions: {
-              link: `/admin/incident/${incidentData._id}`
-            }
-          }
-        });
+       await messaging.send({
+  token,
+  data: {
+    title: String(incidentData.title || 'New Incident'),
+    body: String(
+      `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown'}`
+    ),
+    location: String(incidentData.location || ''),
+    url: `/admin/incident/${incidentData._id}`,
+  },
+  webpush: {
+    headers: { Urgency: 'high' },
+    fcmOptions: {
+      link: `/admin/incident/${incidentData._id}`,
+    },
+  },
+});
+
       } catch (err: any) {
         console.error('FCM send failed for token:', token, err);
         // If token is invalid (unregistered), optional: delete from Sanity
