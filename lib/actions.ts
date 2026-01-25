@@ -27,6 +27,7 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       const token = doc.token;
       if (!token) return;
 
+      try {
         await messaging.send({
           token: token,
           // We omit 'notification' key to prevent auto-display on background.
