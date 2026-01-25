@@ -32,6 +32,8 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "firebase": "^12.8.0",
+    "firebase-admin": "^13.6.0",
     "jspdf": "^3.0.4",
     "jspdf-autotable": "^5.0.2",
     "leaflet": "^1.9.4",
