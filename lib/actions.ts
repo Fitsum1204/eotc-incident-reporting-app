@@ -9,11 +9,10 @@ import { getMessaging } from "@/lib/firebase-admin";
 
 // ... (other imports)
 
-// Notify subscribed admins about a new incident
+
+
 async function notifyAdminsAboutNewIncident(incidentData: any) {
   try {
-    // 1. Fetch all admin subscriptions from Sanity
-    // Note: Schema changed from 'subscription' object to 'token' string
     const adminSubscriptions = await writeClient.fetch(
       `*[_type == "pushSubscription" && role == "admin"]{token}`
     );
@@ -22,7 +21,6 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
 
     const messaging = getMessaging();
 
-    // 2. Send to each subscription directly using Firebase Admin
     const notificationPromises = adminSubscriptions.map(async (doc: any) => {
       const token = doc.token;
       if (!token) return;
@@ -30,35 +28,27 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       try {
         await messaging.send({
           token: token,
-          // Standard notification payload for reliability (system tray)
-          notification: {
-            title: '🚨 ' + (incidentData.title || 'New Incident'),
-            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
-          },
-          // Data payload for service worker handling (grouping, click actions)
+          // CRITICAL: No 'notification' field here. Use 'data' only.
           data: {
-            title: incidentData.title || 'New Incident',
-            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
-            location: incidentData.location || '',
-            incidentId: incidentData._id || '',
+            title: incidentData.title || '🚨 New Incident Reported',
+            body: `Incident at ${incidentData.location || 'Unknown location'}`,
             url: `/admin/incident/${incidentData._id}`,
-            click_action: `/admin/incident/${incidentData._id}`,
+            incidentId: incidentData._id,
+          },
+          android: {
+            priority: 'high',
           },
           webpush: {
             headers: {
-              Urgency: 'high'
+              Urgency: 'high', // Wakes up the browser/phone
             },
             fcmOptions: {
-              link: `/admin/incident/${incidentData._id}`
-            }
-          }
+              link: `/admin/incident/${incidentData._id}`,
+            },
+          },
         });
       } catch (err: any) {
         console.error('FCM send failed for token:', token, err);
-        // If token is invalid (unregistered), optional: delete from Sanity
-        if (err.code === 'messaging/registration-token-not-registered') {
-             // await writeClient.delete(doc._id); // requires fetching _id above
-        }
       }
     });
 

@@ -4,6 +4,7 @@ import AdminIncidentsPage from "@/components/shared/AuthUSer";
 
 export default async function AdminPage() {
   const session = await auth();
+  
   //console.log("Admin Page Session:", session?.user);
   if (!session) redirect("/");
   if (!session?.user.isAdmin) redirect("/");
@@ -17,3 +18,4 @@ export default async function AdminPage() {
   );
 }
 
+// Inside AdminIncidentsPage component
