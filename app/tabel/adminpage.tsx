@@ -97,19 +97,19 @@ const [stats, setStats] = useState<any>(null);
           const timeSinceLastNotification =
             now - lastNotificationTimeRef.current;
 
-          if (timeSinceLastNotification > NOTIFICATION_COOLDOWN) {
-            const unverifiedNew = newIncidents.filter(
-              (inc) => inc.verification === 'pending'
-            );
+          // Only notify if cooldown period has passed
+          // Removed cooldown to ensure all new incidents are notified
+          const unverifiedNew = newIncidents.filter(
+            (inc) => inc.verification === 'pending'
+          );
 
-            if (unverifiedNew.length > 0) {
-              notify('New incidents require verification', {
-                body: `${unverifiedNew.length} new incident(s) pending verification`,
-                tag: 'new-incidents',
-              });
+          if (unverifiedNew.length > 0) {
+            notify('New incidents require verification', {
+              body: `${unverifiedNew.length} new incident(s) pending verification`,
+              tag: 'new-incidents',
+            });
 
-              lastNotificationTimeRef.current = now;
-            }
+            lastNotificationTimeRef.current = now;
           }
         }
 

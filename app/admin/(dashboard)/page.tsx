@@ -82,9 +82,7 @@ const [stats, setStats] = useState<any>(null);
     }
   }, [permission, subscribe]);
 
-  // Second useEffect: Poll for NEW incidents and notify
 
-  // Second useEffect: Poll for NEW incidents and notify
   useEffect(() => {
     // if (permission === 'denied') return; // Optional: check permission if you only want browser notifs
     
@@ -105,20 +103,19 @@ const [stats, setStats] = useState<any>(null);
           const now = Date.now();
 
           // Only notify if cooldown period has passed (prevents spam)
-          if (now - lastNotificationTimeRef.current > NOTIFICATION_COOLDOWN) {
-            const unverifiedNew = newIncidents.filter(
-              (inc) => inc.verification === 'pending'
-            );
-            
-            if (unverifiedNew.length > 0) {
-              // This will show toast + browser notification (if permission granted)
-              notify('New incidents require verification', {
-                body: `${unverifiedNew.length} new incident(s) pending verification`,
-                tag: 'new-incidents', // Prevents duplicate browser notifications
-              });
+          // Removed cooldown to ensure all new incidents are notified
+          const unverifiedNew = newIncidents.filter(
+            (inc) => inc.verification === 'pending'
+          );
+          
+          if (unverifiedNew.length > 0) {
+            // This will show toast + browser notification (if permission granted)
+            notify('New incidents require verification', {
+              body: `${unverifiedNew.length} new incident(s) pending verification`,
+              tag: 'new-incidents', // Prevents duplicate browser notifications
+            });
 
-              lastNotificationTimeRef.current = now;
-            }
+            lastNotificationTimeRef.current = now;
           }
         }
 
