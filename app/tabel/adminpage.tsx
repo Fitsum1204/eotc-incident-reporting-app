@@ -1,5 +1,6 @@
 'use client';
 
+import { usePushNotifications } from '@/hooks/use-push-notifications';
 import { useEffect, useState, useRef } from 'react';
 import { DataTable } from '@/app/tabel/data-table';
 import { columns } from '@/app/tabel/columns';
@@ -17,7 +18,7 @@ import { VerificationChart } from '@/components/shared/VerificationChart';
 import { IncidentsTrendChart } from '@/components/shared/IncidentsTrendChart';
 import { StatCard } from '@/components/shared/StatCard';
 export default function AdminIncidentsPage() {
-  
+  const { notify, permission, subscribe } = usePushNotifications(); 
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [incidentsData, setIncidentsData] = useState<any[]>([]);
@@ -76,7 +77,7 @@ const [stats, setStats] = useState<any>(null);
   }, []);
 
   // Second useEffect: Poll for NEW incidents and notify
-  /* useEffect(() => {
+  useEffect(() => {
     if (permission === 'denied') return;
 
     const checkNewIncidents = async () => {
@@ -123,8 +124,7 @@ const [stats, setStats] = useState<any>(null);
     const interval = setInterval(checkNewIncidents, 30_000);
 
     return () => clearInterval(interval);
-  }, [notify, permission]);
- */
+  }, [notify]);
   const handleUpdateStatus = async (
     id: string,
     verification: 'verified' | 'rejected'
