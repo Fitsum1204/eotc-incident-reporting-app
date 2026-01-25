@@ -2,23 +2,8 @@
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// Initialize Firebase in the service worker
-// Note: These values must match your client config in lib/firebase.ts
-// Usually we can't access process.env here directly if not built by Webpack in a specific way.
-// For a simple public/sw.js in Next.js, hardcoding or using a build step is common.
-// However, since we can't easily inject env vars into a static public file without a build step,
-// we will assume the user might need to hardcode them OR we rely on the `firebase-messaging-sw.js` convention.
-// A better approach for Next.js is indeed `next-pwa` which can handle this, 
-// BUT for now, let's setup the listener logic which integrates with our existing custom logic.
-
-// Since we can't use process.env here, and we don't want to expose keys in source if possible 
-// (though PUBLIC keys are fine), we'll try to keep it generic or ask user to fill it.
-// Actually, for the service worker to receive background messages via FCM, it initializes itself 
-// if we use the default 'firebase-messaging-sw.js'.
-// Since we have a custom 'sw.js' registered, we need to init firebase here.
-
 const firebaseConfig = {
- apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
+  apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
   authDomain: "incident-tracker-cefe9.firebaseapp.com",
   projectId: "incident-tracker-cefe9",
   storageBucket: "incident-tracker-cefe9.firebasestorage.app",
@@ -30,130 +15,87 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// Handle background messages
+/**
+ * Handle background messages.
+ * We use 'data' payload to manually construct notifications, allowing for
+ * grouping/stacking behavior which isn't possible with auto-display 'notification' payload.
+ */
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  // Customize notification here
-  const notificationTitle = payload.notification.title;
-  const notificationOptions = {
-    body: payload.notification.body,
-    icon: '/maskable-icon.png', // valid path relative to scope
-    data: payload.data
-  };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
-});
-
-
-
-// public/sw.js
-
-self.addEventListener('push', (event) => {
-  let pushData = {};
-  try {
-    pushData = event.data ? event.data.json() : {};
-  } catch (e) {
-    console.error('Invalid push payload', e);
-  }
-
+  const data = payload.data || {};
   const GROUP_TAG = 'incident-group';
 
+  // 1. Get existing notifications with this tag
   const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
     .then((notifications) => {
-      // Create the text for the FIRST notification
-      let title = '🚨 New Incident Reported ';
-      let body = `${pushData.incidentTitle} at ${pushData.location}`;
+      
+      let title = '🚨 New Incident Reported';
+      let body = `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
       let count = 1;
 
-      // Logic for GROUPING if a notification is already visible
+      // 2. Check if we have existing notifications to group
       if (notifications.length > 0) {
         const existingNotification = notifications[0];
+        // Retrieve internal counter from existing notification's data
         const previousCount = existingNotification.data?.count || 1;
         count = previousCount + 1;
 
         title = `🚨 ${count} New Incidents`;
-        body = `Latest: ${pushData.incidentTitle}`; 
+        body = `Latest: ${data.title}`;
       }
 
-      const options = {
+      // 3. Show the new/updated notification
+      const notificationOptions = {
         body: body,
         icon: '/maskable-icon.png',
         badge: '/maskable-icon.png',
-        tag: GROUP_TAG,
-        renotify: true,
+        tag: GROUP_TAG, // Replaces old notification with same tag
+        renotify: true, // Vibrates/Alerts again
         requireInteraction: true,
         data: {
-          // If 1 incident, go to specific page. If many, go to list.
-          url: count > 1 ? '/admin/incidents' : (pushData.url || '/'),
+          url: count > 1 ? '/admin/incidents' : (data.url || '/'),
           count: count,
-        },
+          click_action: data.click_action // standard webpush field
+        }
       };
 
-      return self.registration.showNotification(title, options);
+      return self.registration.showNotification(title, notificationOptions);
     });
 
-  event.waitUntil(promiseChain);
+  // Keep worker alive until notification is shown
+  // Note: onBackgroundMessage doesn't pass 'event' directly in typical API, 
+  // but internally it handles waitUntil. We just return the promise if supported, 
+  // or rely on self.registration.showNotification returning a promise.
 });
 
-/* self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-
-  const urlToOpen =
-    event.notification.data?.url || '/';
-
-  event.waitUntil(
-    clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true,
-    }).then((clientList) => {
-      for (const client of clientList) {
-        if (client.url.includes(urlToOpen) && 'focus' in client) {
-          return client.focus();
-        }
-      }
-
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
-}); */
-
-
-// public/sw.js
-
+// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  // 1. Close the notification immediately
   event.notification.close();
 
-  // 2. Get the URL we stored during the 'push' event
+  // Get URL from data
+  // Logic: If multiple incidents, go to list. If single, go to details.
   const urlToOpen = event.notification.data?.url || '/';
 
-  // 3. Handle window management
   event.waitUntil(
     clients.matchAll({
       type: 'window',
       includeUncontrolled: true,
     }).then((clientList) => {
-      // Check if the admin already has a tab open with this site
+      // Focus existing tab if open
       for (const client of clientList) {
-        // If the tab is already on our site, focus it and navigate
-        if ('focus' in client) {
-          client.focus();
-          // Optional: If you want to force the existing tab to the new URL:
-          //return client.navigate(urlToOpen);
-          return;
+        if (client.url && 'focus' in client) {
+          return client.focus().then(formattedClient => {
+             // Optional: navigate if URL is different
+             // return formattedClient.navigate(urlToOpen);
+             return formattedClient;
+          });
         }
       }
-
-      // If no tabs are open, open a new one
+      // Otherwise open new window
       if (clients.openWindow) {
         return clients.openWindow(urlToOpen);
       }
     })
   );
-});
-
-self.addEventListener('notificationclose', (event) => {
-  console.log('Notification closed:', event.notification.tag);
 });

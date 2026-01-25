@@ -27,23 +27,23 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       const token = doc.token;
       if (!token) return;
 
-      try {
         await messaging.send({
           token: token,
-          notification: {
-            title: '🚨 New Incident Reported',
-            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
-          },
+          // We omit 'notification' key to prevent auto-display on background.
+          // This forces 'onBackgroundMessage' in sw.js to handle it, enabling our custom grouping logic.
           data: {
-            // Data payload (strings only)
+            title: incidentData.title || 'New Incident',
+            location: incidentData.location || '',
             incidentId: incidentData._id || '',
             url: `/admin/incident/${incidentData._id}`,
             click_action: `/admin/incident/${incidentData._id}`,
           },
           webpush: {
-            notification: {
-              icon: '/maskable-icon.png',
-              click_action: `/admin/incident/${incidentData._id}`,
+            headers: {
+              Urgency: 'high'
+            },
+            fcmOptions: {
+              link: `/admin/incident/${incidentData._id}`
             }
           }
         });
