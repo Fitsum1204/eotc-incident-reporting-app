@@ -1,5 +1,48 @@
+// public/sw.js
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// self.addEventListener('push', ... in your service-worker.js
+// Initialize Firebase in the service worker
+// Note: These values must match your client config in lib/firebase.ts
+// Usually we can't access process.env here directly if not built by Webpack in a specific way.
+// For a simple public/sw.js in Next.js, hardcoding or using a build step is common.
+// However, since we can't easily inject env vars into a static public file without a build step,
+// we will assume the user might need to hardcode them OR we rely on the `firebase-messaging-sw.js` convention.
+// A better approach for Next.js is indeed `next-pwa` which can handle this, 
+// BUT for now, let's setup the listener logic which integrates with our existing custom logic.
+
+// Since we can't use process.env here, and we don't want to expose keys in source if possible 
+// (though PUBLIC keys are fine), we'll try to keep it generic or ask user to fill it.
+// Actually, for the service worker to receive background messages via FCM, it initializes itself 
+// if we use the default 'firebase-messaging-sw.js'.
+// Since we have a custom 'sw.js' registered, we need to init firebase here.
+
+const firebaseConfig = {
+ apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
+  authDomain: "incident-tracker-cefe9.firebaseapp.com",
+  projectId: "incident-tracker-cefe9",
+  storageBucket: "incident-tracker-cefe9.firebasestorage.app",
+  messagingSenderId: "444851966244",
+  appId: "1:444851966244:web:c71dc6ce73d42f231463b1",
+  measurementId: "G-JF8S7H0P3E"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+// Handle background messages
+messaging.onBackgroundMessage((payload) => {
+  console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  // Customize notification here
+  const notificationTitle = payload.notification.title;
+  const notificationOptions = {
+    body: payload.notification.body,
+    icon: '/maskable-icon.png', // valid path relative to scope
+    data: payload.data
+  };
+
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
 
 
 

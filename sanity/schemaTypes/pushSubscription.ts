@@ -19,21 +19,9 @@ export const pushSubscription = defineType({
       to: [{ type: 'user' }], // Ensure you have a 'user' schema
     }),
     defineField({
-      name: 'subscription',
-      title: 'Subscription Data',
-      type: 'object',
-      fields: [
-        { name: 'endpoint', type: 'string' },
-        { name: 'expirationTime', type: 'number' },
-        {
-          name: 'keys',
-          type: 'object',
-          fields: [
-            { name: 'p256dh', type: 'string' },
-            { name: 'auth', type: 'string' },
-          ],
-        },
-      ],
+      name: 'token',
+      title: 'FCM Token',
+      type: 'string', // Changed from 'subscription' object to 'token' string
     }),
   ],
 });

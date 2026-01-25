@@ -1,8 +1,11 @@
 // lib/notifications.ts
 'use client';
 
+import { messaging } from './firebase';
+import { getToken } from 'firebase/messaging';
+
 export async function requestNotificationPermission(): Promise<boolean> {
-  if (!('Notification' in window)) {
+  if (typeof window === 'undefined' || !('Notification' in window)) {
     console.warn('This browser does not support notifications');
     return false;
   }
@@ -19,70 +22,39 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return false;
 }
 
-export async function subscribeToPushNotifications(): Promise<PushSubscription | null> {
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    console.warn('Push messaging is not supported');
+export async function getFcmToken(): Promise<string | null> {
+  if (!messaging) {
+    console.warn('Firebase Messaging not initialized');
     return null;
   }
 
   try {
-    // Register service worker
     const registration = await navigator.serviceWorker.ready;
+    
+    // We get the token, passing usage config tied to our VAPID key equivalent (if set via env)
+    // Actually, in default FCM setup, we just need the VAPID key if we want to be explicit,
+    // but often it's configured in the firebase config. 
+    // Usually `getToken` takes { vapidKey: '...' } if we want to override or if not set in console.
+    // For now, we'll assume the user might need to pass the VAPID key if they didn't generate one in console.
+    // But let's check basic usage first.
+    
+    // NOTE: You need to add your VAPID key here if you generated one in Firebase Console -> Cloud Messaging -> Web Push Certificates
+    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-    // Subscribe to push
-    const vapidKey = urlBase64ToUint8Array(
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || ''
-    );
-
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      // Use the underlying ArrayBuffer to match the expected type
-      applicationServerKey: vapidKey.buffer as ArrayBuffer,
+    const currentToken = await getToken(messaging, { 
+      serviceWorkerRegistration: registration,
+      vapidKey: vapidKey 
     });
 
-    return subscription;
-  } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
-    return null;
-  }
-}
-
-export async function unsubscribeFromPushNotifications(): Promise<boolean> {
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    
-    if (subscription) {
-      await subscription.unsubscribe();
-      return true;
+    if (currentToken) {
+      return currentToken;
+    } else {
+      console.log('No registration token available. Request permission to generate one.');
+      return null;
     }
-    return false;
-  } catch (error) {
-    console.error('Error unsubscribing from push notifications:', error);
-    return false;
-  }
-}
-
-export async function getPushSubscription(): Promise<PushSubscription | null> {
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    return await registration.pushManager.getSubscription();
-  } catch (error) {
-    console.error('Error getting push subscription:', error);
+  } catch (err) {
+    console.log('An error occurred while retrieving token. ', err);
     return null;
   }
-}
-
-// Helper function to convert VAPID key
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
 }
 
