@@ -9,7 +9,7 @@ import { updateIncidentStatus } from '@/components/updateIncidents';
 import { toast } from 'sonner';
 import IncidentMapClient from '@/components/shared/IncidentMapClient';
 import { Incident } from '@/sanity/types';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
+
 
 export default function AdminIncidentsPage() {
   const [incidents, setIncidents] = useState<any[]>([]);
@@ -19,7 +19,7 @@ export default function AdminIncidentsPage() {
   const previousIncidentIdsRef = useRef<Set<string>>(new Set());
   const lastNotificationTimeRef = useRef<number>(0);
   const NOTIFICATION_COOLDOWN = 60000; // 1 minute between notifications
-  const { notify, permission } = usePushNotifications();
+
 
   // First useEffect: Initial fetch
   useEffect(() => {
