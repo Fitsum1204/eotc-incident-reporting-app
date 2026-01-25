@@ -15,6 +15,15 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// Force service worker update
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
+});
+
 /**
  * Handle background messages.
  * We use 'data' payload to manually construct notifications, allowing for
@@ -30,8 +39,8 @@ messaging.onBackgroundMessage((payload) => {
   const promiseChain = self.registration.getNotifications({ tag: GROUP_TAG })
     .then((notifications) => {
       
-      let title = '🚨 New Incident Reported';
-      let body = `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
+      let title = data.title || '🚨 New Incident Reported';
+      let body = data.body || `${data.title || 'Incident'} at ${data.location || 'Unknown location'}`;
       let count = 1;
 
       // 2. Check if we have existing notifications to group

@@ -30,10 +30,15 @@ async function notifyAdminsAboutNewIncident(incidentData: any) {
       try {
         await messaging.send({
           token: token,
-          // We omit 'notification' key to prevent auto-display on background.
-          // This forces 'onBackgroundMessage' in sw.js to handle it, enabling our custom grouping logic.
+          // Standard notification payload for reliability (system tray)
+          notification: {
+            title: '🚨 ' + (incidentData.title || 'New Incident'),
+            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
+          },
+          // Data payload for service worker handling (grouping, click actions)
           data: {
             title: incidentData.title || 'New Incident',
+            body: `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`,
             location: incidentData.location || '',
             incidentId: incidentData._id || '',
             url: `/admin/incident/${incidentData._id}`,
