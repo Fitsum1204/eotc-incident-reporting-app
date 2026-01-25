@@ -1,5 +1,5 @@
 'use client';
-import { usePushNotifications } from '@/hooks/use-push-notifications';
+
 import { useEffect, useState, useRef } from 'react';
 import { DataTable } from '@/app/tabel/data-table';
 import { columns } from '@/app/tabel/columns';
@@ -17,7 +17,7 @@ import { VerificationChart } from '@/components/shared/VerificationChart';
 import { IncidentsTrendChart } from '@/components/shared/IncidentsTrendChart';
 import { StatCard } from '@/components/shared/StatCard';
 export default function AdminIncidentsPage() {
-  const { notify, permission } = usePushNotifications();
+ 
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [incidentsData, setIncidentsData] = useState<any[]>([]);
