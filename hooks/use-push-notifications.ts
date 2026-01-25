@@ -110,6 +110,31 @@ export function usePushNotifications() {
     }
   };
 
+  const notify = async (
+    title: string,
+    options?: { body?: string; tag?: string; data?: any }
+  ) => {
+    // In-app toast
+    toast(`${title}`, { description: `${options?.body}` });
+
+    // Browser notification via service worker
+    try {
+      if (
+        Notification.permission === 'granted' &&
+        'serviceWorker' in navigator
+      ) {
+        const registration = await navigator.serviceWorker.ready;
+        await registration.showNotification(title, {
+          body: options?.body,
+          tag: options?.tag,
+          data: options?.data,
+        });
+      }
+    } catch (err) {
+      console.error('Error showing browser notification:', err);
+    }
+  };
+
   return {
     isSupported,
     permission,
@@ -117,5 +142,6 @@ export function usePushNotifications() {
     isLoading,
     subscribe,
     unsubscribe,
+    notify,
   };
 }
