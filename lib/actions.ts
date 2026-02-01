@@ -1,11 +1,11 @@
-"use server";
+'use server';
 
-import { auth } from "@/auth";
-import { parseServerActionResponse } from "@/lib/utils";
-import { writeClient } from "@/sanity/lib/write-client";
+import { auth } from '@/auth';
+import { parseServerActionResponse } from '@/lib/utils';
+import { writeClient } from '@/sanity/lib/write-client';
 import { v4 as uuidv4 } from 'uuid';
 // lib/actions.ts
-import { getMessaging } from "@/lib/firebase-admin";
+import { getMessaging } from '@/lib/firebase-admin';
 
 // ... (other imports)
 
@@ -19,12 +19,12 @@ async function notifyAdminsAboutNewIncident(incidentData: {
     console.log('🔔 Notifying admins about new incident:', incidentData._id);
 
     // 1. Fetch all admin subscriptions from Sanity (include _id for cleanup)
-    const adminSubscriptions = await writeClient.fetch<Array<{
-      _id: string;
-      token?: string;
-    }>>(
-      `*[_type == "pushSubscription" && role == "admin"]{_id, token}`
-    );
+    const adminSubscriptions = await writeClient.fetch<
+      Array<{
+        _id: string;
+        token?: string;
+      }>
+    >(`*[_type == "pushSubscription" && role == "admin"]{_id, token}`);
 
     if (!adminSubscriptions || adminSubscriptions.length === 0) {
       console.warn('⚠️ No admin subscriptions found');
@@ -32,17 +32,36 @@ async function notifyAdminsAboutNewIncident(incidentData: {
     }
 
     console.log(`📤 Found ${adminSubscriptions.length} admin subscription(s)`);
-
-    const messaging = getMessaging();
+    console.log(
+      '📥 adminSubscriptions preview:',
+      JSON.stringify(adminSubscriptions.slice(0, 5), null, 2),
+    );
+    let messaging;
+    try {
+      console.log('🔧 Initializing Firebase Admin Messaging...');
+      messaging = getMessaging();
+      console.log('🔧 Firebase Admin Messaging initialized');
+    } catch (initErr) {
+      console.error(
+        '❌ Failed to initialize Firebase Admin Messaging:',
+        initErr,
+      );
+      return;
+    }
     const title = incidentData.title || 'New Incident';
     const body = `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`;
     const url = `/admin/incident/${incidentData._id}`;
 
     // 2. Send to each subscription directly using Firebase Admin
     const notificationPromises = adminSubscriptions.map(async (doc) => {
-      const token = doc.token;
+      const token =
+        (doc && (doc.token || (doc.subscription && doc.subscription.token))) ||
+        undefined;
       if (!token) {
-        console.warn('⚠️ Subscription missing token:', doc._id);
+        console.warn(
+          '⚠️ Subscription missing token for doc:',
+          doc._id || JSON.stringify(doc),
+        );
         return;
       }
 
@@ -76,14 +95,23 @@ async function notifyAdminsAboutNewIncident(incidentData: {
           },
         });
 
-        console.log('✅ FCM notification sent successfully to:', token.substring(0, 20) + '...');
+        console.log(
+          '✅ FCM notification sent successfully to:',
+          token.substring(0, 20) + '...',
+        );
       } catch (err: unknown) {
         const error = err as { code?: string; message?: string };
-        console.error('❌ FCM send failed for token:', token.substring(0, 20) + '...', error.message || error);
+        console.error(
+          '❌ FCM send failed for token:',
+          token.substring(0, 20) + '...',
+          error.message || error,
+        );
 
         // If token is invalid (unregistered), delete from Sanity
-        if (error.code === 'messaging/registration-token-not-registered' || 
-            error.code === 'messaging/invalid-registration-token') {
+        if (
+          error.code === 'messaging/registration-token-not-registered' ||
+          error.code === 'messaging/invalid-registration-token'
+        ) {
           console.log('🗑️ Removing expired/invalid token:', doc._id);
           try {
             await writeClient.delete(doc._id);
@@ -96,7 +124,9 @@ async function notifyAdminsAboutNewIncident(incidentData: {
 
     const results = await Promise.allSettled(notificationPromises);
     const successCount = results.filter((r) => r.status === 'fulfilled').length;
-    console.log(`✅ Sent ${successCount}/${adminSubscriptions.length} notifications`);
+    console.log(
+      `✅ Sent ${successCount}/${adminSubscriptions.length} notifications`,
+    );
   } catch (error: unknown) {
     console.error('❌ Error sending admin notifications:', error);
   }
@@ -106,24 +136,23 @@ export const createPitch = async (state: any, form: FormData) => {
 
   if (!session) {
     return parseServerActionResponse({
-      error: "Not signed in",
-      status: "ERROR",
+      error: 'Not signed in',
+      status: 'ERROR',
     });
   }
-  const reporterEmail = session.user.email || null; 
-  const reporterName = session.user.name || "Anonymous Reporter";
+  const reporterEmail = session.user.email || null;
+  const reporterName = session.user.name || 'Anonymous Reporter';
   const reporterImage = session.user.image || null;
-  const title = form.get("title") as string;
-  const description = form.get("description") as string;
-  const location = form.get("location") as string;
-  const date = form.get("date") as string;
-  const lat = Number(form.get("lat"));
-  const lng = Number(form.get("lng"));
-
+  const title = form.get('title') as string;
+  const description = form.get('description') as string;
+  const location = form.get('location') as string;
+  const date = form.get('date') as string;
+  const lat = Number(form.get('lat'));
+  const lng = Number(form.get('lng'));
 
   //  Read file inputs
-  const mainImage = form.get("image") as File | null;
-  const attachments = form.getAll("attachments") as File[];
+  const mainImage = form.get('image') as File | null;
+  const attachments = form.getAll('attachments') as File[];
 
   let mainImageRef = null;
   const attachmentsRefs: any[] = [];
@@ -132,16 +161,15 @@ export const createPitch = async (state: any, form: FormData) => {
     //  Upload main image if exists
     if (mainImage && mainImage.size > 0) {
       const uploadedImage = await writeClient.assets.upload(
-        "image",
+        'image',
         mainImage,
         { filename: mainImage.name },
-        
       );
 
       mainImageRef = {
-        _type: "image",
-        asset: { _type: "reference", _ref: uploadedImage._id },
-        _key: uuidv4()
+        _type: 'image',
+        asset: { _type: 'reference', _ref: uploadedImage._id },
+        _key: uuidv4(),
       };
     }
 
@@ -149,7 +177,7 @@ export const createPitch = async (state: any, form: FormData) => {
     for (const file of attachments) {
       if (file.size === 0) continue;
 
-      const type = file.type.startsWith("image") ? "image" : "file";
+      const type = file.type.startsWith('image') ? 'image' : 'file';
 
       const uploaded = await writeClient.assets.upload(type, file, {
         filename: file.name,
@@ -157,30 +185,28 @@ export const createPitch = async (state: any, form: FormData) => {
 
       attachmentsRefs.push({
         _type: type,
-        asset: { _type: "reference", _ref: uploaded._id },
+        asset: { _type: 'reference', _ref: uploaded._id },
       });
     }
 
     //  Create document
     const incident = await writeClient.create({
-      _type: "incident",
+      _type: 'incident',
       title,
       description,
       location,
       date,
-      category: form.get("type") as string,
+      category: form.get('type') as string,
       image: mainImageRef,
       attachments: attachmentsRefs,
       author: {
-        _type: "reference",
+        _type: 'reference',
         _ref: session.user?.id,
       },
       reporterEmail,
       verification: 'pending',
       locationPoint:
-        Number.isFinite(lat) && Number.isFinite(lng)
-          ? { lat, lng }
-          : undefined,
+        Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : undefined,
     });
 
     // Send notifications to admins (best-effort)
@@ -191,20 +217,18 @@ export const createPitch = async (state: any, form: FormData) => {
     }
 
     return parseServerActionResponse({
-     ...incident,
-      reporterEmail,        
+      ...incident,
+      reporterEmail,
       reporterName,
-      status: "SUCCESS",
-      error: "",
+      status: 'SUCCESS',
+      error: '',
     });
   } catch (error) {
     console.log(error);
 
     return parseServerActionResponse({
       error: JSON.stringify(error),
-      status: "ERROR",
+      status: 'ERROR',
     });
   }
 };
-
-
