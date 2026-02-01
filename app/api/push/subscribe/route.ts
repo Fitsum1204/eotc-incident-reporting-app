@@ -23,15 +23,37 @@ export async function POST(request: NextRequest) {
       if (userId) {
         // Check if token already exists for this user to avoid duplicates?
         // For simplicity, we just create a new record. Ideally we upsert or clean up.
-        await writeClient.create({
-          _type: 'pushSubscription',
-          role: 'admin',
-          user: {
-            _type: 'reference',
-            _ref: userId,
-          },
-          token, // FCM token
-        });
+        // Check if token already exists for this user to avoid duplicates
+        const existingSubscriptions = await writeClient.fetch(
+          `*[_type == "pushSubscription" && user._ref == $userId && token == $token]`,
+          { userId, token }
+        );
+
+        if (existingSubscriptions && existingSubscriptions.length > 0) {
+          // Update existing subscription
+          const existingId = existingSubscriptions[0]._id;
+          await writeClient
+            .patch(existingId)
+            .set({
+              updatedAt: new Date().toISOString(),
+            })
+            .commit();
+          console.log('✅ Updated existing push subscription:', existingId);
+        } else {
+          // Create new subscription with user's actual role
+          await writeClient.create({
+            _type: 'pushSubscription',
+            role: session.user.role || 'user',
+            user: {
+              _type: 'reference',
+              _ref: userId,
+            },
+            token, // FCM token
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+          console.log('✅ Created new push subscription for user:', userId);
+        }
       }
     } catch (err) {
       console.error('Error saving subscription to Sanity:', err);

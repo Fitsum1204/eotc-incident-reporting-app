@@ -20,21 +20,32 @@ self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 
 messaging.onBackgroundMessage(async (payload) => {
+  console.log('📬 FCM background message received:', payload);
+  
+  // FCM sends notification in payload.notification (when using notification field)
+  // and custom data in payload.data
+  const notification = payload.notification || {};
   const data = payload.data || {};
 
-  const title = data.title || '🚨 New Incident';
+  const title = notification.title || data.title || '🚨 New Incident';
+  const body = notification.body || data.body || 'New incident reported';
+  const url = data.url || '/admin/incidents';
+
   const options = {
-    body: data.body || 'New incident reported',
-    icon: '/icon-192.png',
+    body: body,
+    icon: notification.icon || '/icon-192.png',
     badge: '/icon-192.png',
-    tag: 'incident',
+    tag: data.type || 'incident',
     renotify: true,
     requireInteraction: true,
     data: {
-      url: data.url || '/admin/incidents'
+      url: url,
+      type: data.type,
+      incidentId: data.incidentId,
     }
   };
 
+  console.log('🔔 Showing notification:', title, options);
   await self.registration.showNotification(title, options);
 });
 

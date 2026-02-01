@@ -10,52 +10,95 @@ import { getMessaging } from "@/lib/firebase-admin";
 // ... (other imports)
 
 // Notify subscribed admins about a new incident
-async function notifyAdminsAboutNewIncident(incidentData: any) {
+async function notifyAdminsAboutNewIncident(incidentData: {
+  _id: string;
+  title?: string;
+  location?: string;
+}) {
   try {
-    // 1. Fetch all admin subscriptions from Sanity
-    // Note: Schema changed from 'subscription' object to 'token' string
-    const adminSubscriptions = await writeClient.fetch(
-      `*[_type == "pushSubscription" && role == "admin"]{token}`
+    console.log('🔔 Notifying admins about new incident:', incidentData._id);
+
+    // 1. Fetch all admin subscriptions from Sanity (include _id for cleanup)
+    const adminSubscriptions = await writeClient.fetch<Array<{
+      _id: string;
+      token?: string;
+    }>>(
+      `*[_type == "pushSubscription" && role == "admin"]{_id, token}`
     );
 
-    if (!adminSubscriptions || adminSubscriptions.length === 0) return;
+    if (!adminSubscriptions || adminSubscriptions.length === 0) {
+      console.warn('⚠️ No admin subscriptions found');
+      return;
+    }
+
+    console.log(`📤 Found ${adminSubscriptions.length} admin subscription(s)`);
 
     const messaging = getMessaging();
+    const title = incidentData.title || 'New Incident';
+    const body = `${incidentData.title || 'Incident'} at ${incidentData.location || 'Unknown location'}`;
+    const url = `/admin/incident/${incidentData._id}`;
 
     // 2. Send to each subscription directly using Firebase Admin
-    const notificationPromises = adminSubscriptions.map(async (doc: any) => {
+    const notificationPromises = adminSubscriptions.map(async (doc) => {
       const token = doc.token;
-      if (!token) return;
+      if (!token) {
+        console.warn('⚠️ Subscription missing token:', doc._id);
+        return;
+      }
 
       try {
-          await messaging.send({
+        await messaging.send({
           token,
+          notification: {
+            title,
+            body,
+          },
           data: {
-            title: incidentData.title || 'New Incident',
-            body: `${incidentData.title} at ${incidentData.location}`,
-            url: `/admin/incident/${incidentData._id}`,
-            type: 'NEW_INCIDENT'
+            url,
+            type: 'NEW_INCIDENT',
+            incidentId: incidentData._id,
           },
           webpush: {
+            notification: {
+              title,
+              body,
+              icon: '/icon-192.png',
+              badge: '/icon-192.png',
+              requireInteraction: true,
+            },
+            data: {
+              url,
+              type: 'NEW_INCIDENT',
+            },
             headers: {
-              Urgency: 'high'
-            }
-          }
+              Urgency: 'high',
+            },
+          },
         });
 
+        console.log('✅ FCM notification sent successfully to:', token.substring(0, 20) + '...');
+      } catch (err: unknown) {
+        const error = err as { code?: string; message?: string };
+        console.error('❌ FCM send failed for token:', token.substring(0, 20) + '...', error.message || error);
 
-      } catch (err: any) {
-        console.error('FCM send failed for token:', token, err);
-        // If token is invalid (unregistered), optional: delete from Sanity
-        if (err.code === 'messaging/registration-token-not-registered') {
-             // await writeClient.delete(doc._id); // requires fetching _id above
+        // If token is invalid (unregistered), delete from Sanity
+        if (error.code === 'messaging/registration-token-not-registered' || 
+            error.code === 'messaging/invalid-registration-token') {
+          console.log('🗑️ Removing expired/invalid token:', doc._id);
+          try {
+            await writeClient.delete(doc._id);
+          } catch (deleteErr) {
+            console.error('Failed to delete expired subscription:', deleteErr);
+          }
         }
       }
     });
 
-    await Promise.allSettled(notificationPromises);
-  } catch (error) {
-    console.error('Push notification error:', error);
+    const results = await Promise.allSettled(notificationPromises);
+    const successCount = results.filter((r) => r.status === 'fulfilled').length;
+    console.log(`✅ Sent ${successCount}/${adminSubscriptions.length} notifications`);
+  } catch (error: unknown) {
+    console.error('❌ Error sending admin notifications:', error);
   }
 }
 export const createPitch = async (state: any, form: FormData) => {
