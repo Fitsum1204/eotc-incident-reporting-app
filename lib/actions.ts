@@ -19,12 +19,9 @@ async function notifyAdminsAboutNewIncident(incidentData: {
     console.log('🔔 Notifying admins about new incident:', incidentData._id);
 
     // 1. Fetch all admin subscriptions from Sanity (include _id for cleanup)
-    const adminSubscriptions = await writeClient.fetch<
-      Array<{
-        _id: string;
-        token?: string;
-      }>
-    >(`*[_type == "pushSubscription" && role == "admin"]{_id, token}`);
+    const adminSubscriptions = await writeClient.fetch<any[]>(
+      `*[_type == "pushSubscription" && role == "admin"]{_id, token}`,
+    );
 
     if (!adminSubscriptions || adminSubscriptions.length === 0) {
       console.warn('⚠️ No admin subscriptions found');
@@ -53,7 +50,7 @@ async function notifyAdminsAboutNewIncident(incidentData: {
     const url = `/admin/incident/${incidentData._id}`;
 
     // 2. Send to each subscription directly using Firebase Admin
-    const notificationPromises = adminSubscriptions.map(async (doc) => {
+    const notificationPromises = adminSubscriptions.map(async (doc: any) => {
       const token =
         (doc && (doc.token || (doc.subscription && doc.subscription.token))) ||
         undefined;
