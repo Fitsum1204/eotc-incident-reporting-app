@@ -11,29 +11,29 @@ export async function POST(req: NextRequest) {
 
     const messaging = getMessaging(); // Initialize lazily
 
-    await messaging.send({
-        token: token,
+    const result = await messaging.send({
+      token: token,
+      notification: {
+        title: payload.title,
+        body: payload.body,
+      },
+      data: {
+        url: payload.url || '/',
+        click_action: payload.url || '/', // For some platforms
+        ...payload,
+      },
+      // Webpush config for actions etc.
+      webpush: {
         notification: {
-            title: payload.title,
-            body: payload.body,
+          icon: '/maskable-icon.png',
+          data: {
+            url: payload.url,
+          },
         },
-        data: {
-            url: payload.url || '/',
-            click_action: payload.url || '/', // For some platforms
-            ...payload
-        },
-        // Webpush config for actions etc.
-        webpush: {
-            notification: {
-                icon: '/maskable-icon.png',
-                data: {
-                    url: payload.url
-                }
-            }
-        }
+      },
     });
 
-    console.log('✅ FCM PUSH SENT');
+    console.log('✅ FCM PUSH SENT, messageId:', result);
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error('❌ Push failed:', err);
