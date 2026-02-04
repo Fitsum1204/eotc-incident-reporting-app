@@ -63,29 +63,20 @@ async function notifyAdminsAboutNewIncident(incidentData: {
       }
 
       try {
+        // Send data-only payload to avoid automatic browser UI + duplicate
+        // handling by both Firebase SDK and our service worker. The
+        // service worker will read payload.data and show the notification.
         await messaging.send({
           token,
-          notification: {
+          data: {
             title,
             body,
-          },
-          data: {
             url,
             type: 'NEW_INCIDENT',
             incidentId: incidentData._id,
           },
           webpush: {
-            notification: {
-              title,
-              body,
-              icon: '/icon-192.png',
-              badge: '/icon-192.png',
-              requireInteraction: true,
-            },
-            data: {
-              url,
-              type: 'NEW_INCIDENT',
-            },
+            // Keep headers to hint urgency for webpush transport
             headers: {
               Urgency: 'high',
             },

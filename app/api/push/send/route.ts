@@ -11,24 +11,21 @@ export async function POST(req: NextRequest) {
 
     const messaging = getMessaging(); // Initialize lazily
 
+    // Send data-only payload to avoid duplicate automatic UI handling
+    // by the browser + our service worker. The service worker will display
+    // the notification from `payload` data.
     const result = await messaging.send({
       token: token,
-      notification: {
+      data: {
         title: payload.title,
         body: payload.body,
-      },
-      data: {
         url: payload.url || '/',
-        click_action: payload.url || '/', // For some platforms
+        tag: payload.tag || 'notification',
         ...payload,
       },
-      // Webpush config for actions etc.
       webpush: {
-        notification: {
-          icon: '/maskable-icon.png',
-          data: {
-            url: payload.url,
-          },
+        headers: {
+          Urgency: 'high',
         },
       },
     });
