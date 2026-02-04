@@ -29,27 +29,39 @@ export async function getFcmToken(): Promise<string | null> {
   }
 
   try {
+    console.log('🔁 Waiting for service worker.ready...');
     const registration = await navigator.serviceWorker.ready;
-    
+    console.log('✅ Service worker ready:', registration);
+
     // We get the token, passing usage config tied to our VAPID key equivalent (if set via env)
     // Actually, in default FCM setup, we just need the VAPID key if we want to be explicit,
-    // but often it's configured in the firebase config. 
+    // but often it's configured in the firebase config.
     // Usually `getToken` takes { vapidKey: '...' } if we want to override or if not set in console.
     // For now, we'll assume the user might need to pass the VAPID key if they didn't generate one in console.
     // But let's check basic usage first.
-    
-    // NOTE: You need to add your VAPID key here if you generated one in Firebase Console -> Cloud Messaging -> Web Push Certificates
-    const vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
 
-    const currentToken = await getToken(messaging, { 
-      serviceWorkerRegistration: registration,
-      vapidKey: vapidKey 
-    });
+    // NOTE: You need to add your VAPID key here if you generated one in Firebase Console -> Cloud Messaging -> Web Push Certificates
+    const vapidKey =
+      process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY ||
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    console.log('🔑 Using VAPID key:', Boolean(vapidKey));
+
+    const getTokenOptions: any = { serviceWorkerRegistration: registration };
+    if (vapidKey) getTokenOptions.vapidKey = vapidKey;
+
+    const currentToken = await getToken(messaging, getTokenOptions);
+
+    console.log(
+      '🔔 getToken result:',
+      currentToken ? 'TOKEN_RECEIVED' : 'NO_TOKEN',
+    );
 
     if (currentToken) {
       return currentToken;
     } else {
-      console.log('No registration token available. Request permission to generate one.');
+      console.log(
+        'No registration token available. Request permission to generate one.',
+      );
       return null;
     }
   } catch (err) {
@@ -57,4 +69,3 @@ export async function getFcmToken(): Promise<string | null> {
     return null;
   }
 }
-
