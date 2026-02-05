@@ -1,17 +1,17 @@
-
-
-
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
-
+importScripts(
+  'https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js',
+);
+importScripts(
+  'https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js',
+);
 
 firebase.initializeApp({
-  apiKey: "AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA",
-  authDomain: "incident-tracker-cefe9.firebaseapp.com",
-  projectId: "incident-tracker-cefe9",
-  storageBucket: "incident-tracker-cefe9.appspot.com",
-  messagingSenderId: "444851966244",
-  appId: "1:444851966244:web:c71dc6ce73d42f231463b1",
+  apiKey: 'AIzaSyAYQtB9AKCzIRie8MIt2JM99ogSoOsKWTA',
+  authDomain: 'incident-tracker-cefe9.firebaseapp.com',
+  projectId: 'incident-tracker-cefe9',
+  storageBucket: 'incident-tracker-cefe9.appspot.com',
+  messagingSenderId: '444851966244',
+  appId: '1:444851966244:web:c71dc6ce73d42f231463b1',
 });
 
 const messaging = firebase.messaging();
@@ -21,7 +21,7 @@ self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
 
 messaging.onBackgroundMessage(async (payload) => {
   console.log('📬 FCM background message received:', payload);
-  
+
   // FCM sends notification in payload.notification (when using notification field)
   // and custom data in payload.data
   const notification = payload.notification || {};
@@ -35,14 +35,19 @@ messaging.onBackgroundMessage(async (payload) => {
     body: body,
     icon: notification.icon || '/icon-192.png',
     badge: '/icon-192.png',
-    tag: data.type || 'incident',
+    // Use a unique tag per incident/event so notifications stack
+    // If `incidentId` is present we group updates for the same incident,
+    // otherwise include a timestamp to avoid replacing previous notifications.
+    tag: data.incidentId
+      ? `incident-${data.incidentId}`
+      : `${data.type || 'incident'}-${Date.now()}`,
     renotify: true,
     requireInteraction: true,
     data: {
       url: url,
       type: data.type,
       incidentId: data.incidentId,
-    }
+    },
   };
 
   console.log('🔔 Showing notification:', title, options);
@@ -53,7 +58,8 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true })
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientsArr) => {
         for (const client of clientsArr) {
           if (client.url.includes('/admin') && 'focus' in client) {
@@ -61,6 +67,6 @@ self.addEventListener('notificationclick', (event) => {
           }
         }
         return clients.openWindow(event.notification.data.url);
-      })
+      }),
   );
 });
