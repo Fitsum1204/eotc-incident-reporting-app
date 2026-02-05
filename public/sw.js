@@ -35,12 +35,11 @@ messaging.onBackgroundMessage(async (payload) => {
     body: body,
     icon: notification.icon || '/icon-192.png',
     badge: '/icon-192.png',
-    // Use a unique tag per incident/event so notifications stack
-    // If `incidentId` is present we group updates for the same incident,
-    // otherwise include a timestamp to avoid replacing previous notifications.
-    tag: data.incidentId
-      ? `incident-${data.incidentId}`
-      : `${data.type || 'incident'}-${Date.now()}`,
+    // Always generate a unique tag so new notifications don't replace older ones.
+    // Use timestamp + random suffix to avoid collisions even across rapid events.
+    tag: `${data.type || 'incident'}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 9)}`,
     renotify: true,
     requireInteraction: true,
     data: {
