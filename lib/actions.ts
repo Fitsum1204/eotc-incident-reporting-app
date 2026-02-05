@@ -40,7 +40,7 @@ async function notifyAdminsAboutNewIncident(incidentData: {
       console.log('🔧 Firebase Admin Messaging initialized');
     } catch (initErr) {
       console.error(
-        '❌ Failed to initialize Firebase Admin Messaging:',
+        ' Failed to initialize Firebase Admin Messaging:',
         initErr,
       );
       return;
