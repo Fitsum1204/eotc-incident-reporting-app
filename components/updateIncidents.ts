@@ -1,3 +1,6 @@
+
+"use server";
+
 import { writeClient } from "@/sanity/lib/write-client";
 import { getMessaging } from "@/lib/firebase-admin";
 
