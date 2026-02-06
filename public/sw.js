@@ -40,8 +40,8 @@ messaging.onBackgroundMessage(async (payload) => {
     tag: `${data.type || 'incident'}-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2, 9)}`,
-    renotify: true,
-    requireInteraction: true,
+    renotify: true,//ensures the phone vibrates or makes a sound even if a previous notification is already visible
+    requireInteraction: true,//the alert stays on the screen until the user dismisses it or clicks it
     data: {
       url: url,
       type: data.type,
@@ -54,7 +54,7 @@ messaging.onBackgroundMessage(async (payload) => {
 });
 
 self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
+  event.notification.close();//removes the notification popup
 
   event.waitUntil(
     clients
