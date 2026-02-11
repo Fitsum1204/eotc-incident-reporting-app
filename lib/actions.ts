@@ -201,7 +201,7 @@ export const createPitch = async (state: any, form: FormData) => {
     // Send notifications to admins (best-effort)
     try {
           await sendPush({
-        roles: ['admin', 'user'], // who should receive
+        roles: ['admin'], // who should receive
         title: '🚨 New Incident Reported',
         body: `${incident.title} at ${incident.location}`,
         url: `/incident/${incident._id}`,
