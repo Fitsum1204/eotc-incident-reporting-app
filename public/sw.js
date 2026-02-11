@@ -18,8 +18,74 @@ const messaging = firebase.messaging();
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
-
 messaging.onBackgroundMessage(async (payload) => {
+  const data = payload.data || {};
+
+  const type = data.type || "GENERAL";
+  let title = data.title || "Notification";
+  let body = data.body || "";
+  let url = data.url || "/";
+
+  // 🎯 Type-based behavior
+  switch (type) {
+    case "NEW_INCIDENT":
+      title = "🚨 " + title;
+      break;
+
+    case "INCIDENT_APPROVED":
+      title = "✅ " + title;
+      break;
+
+    case "INCIDENT_REJECTED":
+      title = "❌ " + title;
+      break;
+
+    case "SYSTEM_ALERT":
+      title = "📢 " + title;
+      break;
+
+    default:
+      break;
+  }
+
+  await self.registration.showNotification(title, {
+    body,
+    icon: "/icon-192.png",
+    badge: "/icon-192.png",
+
+    // unique tag = allow multiple notifications
+    tag: `${type}-${Date.now()}-${Math.random()}`,
+
+    renotify: true,
+    requireInteraction: true,
+
+    data: {
+      url,
+      type,
+    },
+  });
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url.includes(targetUrl) && "focus" in client) {
+            return client.focus();
+          }
+        }
+        return clients.openWindow(targetUrl);
+      })
+  );
+});
+
+//push notification for admin only 
+/* messaging.onBackgroundMessage(async (payload) => {
   console.log('📬 FCM background message received:', payload);
 
   // FCM sends notification in payload.notification (when using notification field)
@@ -69,3 +135,4 @@ self.addEventListener('notificationclick', (event) => {
       }),
   );
 });
+ */

@@ -1,5 +1,7 @@
 // app/api/push/subscribe/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+//push notification for admin 
+/* import { NextRequest, NextResponse } from 'next/server';
+
 import { auth } from '@/auth';
 import { writeClient } from '@/sanity/lib/write-client';
 
@@ -66,6 +68,63 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error saving subscription:', error);
+    return NextResponse.json(
+      { error: 'Failed to save subscription' },
+      { status: 500 }
+    );
+  }
+} */
+
+
+  // app/api/push/subscribe/route.ts
+
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/auth';
+import { writeClient } from '@/sanity/lib/write-client';
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { token } = await request.json();
+
+    if (!token) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 400 });
+    }
+
+    const userId = session.user.id;
+    const role = session.user.role || 'user';
+
+    // 🔥 Deterministic ID prevents duplicates
+    const documentId = `push-${token}`;
+
+    await writeClient.createOrReplace({
+      _id: documentId,
+      _type: 'pushSubscription',
+      user: {
+        _type: 'reference',
+        _ref: userId,
+      },
+      role,
+      token,
+      device: request.headers.get('user-agent') || 'unknown',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    console.log('✅ Push subscription upserted:', documentId);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Subscription saved successfully',
+    });
+  } catch (error) {
+    console.error('❌ Error saving subscription:', error);
+
     return NextResponse.json(
       { error: 'Failed to save subscription' },
       { status: 500 }

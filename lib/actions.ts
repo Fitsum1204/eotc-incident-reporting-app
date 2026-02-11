@@ -4,13 +4,14 @@ import { auth } from '@/auth';
 import { parseServerActionResponse } from '@/lib/utils';
 import { writeClient } from '@/sanity/lib/write-client';
 import { v4 as uuidv4 } from 'uuid';
+import { sendPush } from '@/lib/push-service';
 // lib/actions.ts
 import { getMessaging } from '@/lib/firebase-admin';
 
-// ... (other imports)
+
 
 // Notify subscribed admins about a new incident
-async function notifyAdminsAboutNewIncident(incidentData: {
+/* async function notifyAdminsAboutNewIncident(incidentData: {
   _id: string;
   title?: string;
   location?: string;
@@ -118,7 +119,7 @@ async function notifyAdminsAboutNewIncident(incidentData: {
   } catch (error: unknown) {
     console.error('❌ Error sending admin notifications:', error);
   }
-}
+} */
 export const createPitch = async (state: any, form: FormData) => {
   const session = await auth();
 
@@ -199,7 +200,15 @@ export const createPitch = async (state: any, form: FormData) => {
 
     // Send notifications to admins (best-effort)
     try {
-      await notifyAdminsAboutNewIncident(incident);
+          await sendPush({
+        roles: ['admin', 'user'], // who should receive
+        title: '🚨 New Incident Reported',
+        body: `${incident.title} at ${incident.location}`,
+        url: `/incident/${incident._id}`,
+        type: 'NEW_INCIDENT',
+      });
+        //push notification only for admin use this
+      //await notifyAdminsAboutNewIncident(incident);
     } catch (err) {
       console.error('notifyAdminsAboutNewIncident error:', err);
     }
