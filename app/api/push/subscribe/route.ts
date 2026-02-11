@@ -1,6 +1,6 @@
 // app/api/push/subscribe/route.ts
 //push notification for admin 
-/* import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/auth';
 import { writeClient } from '@/sanity/lib/write-client';
@@ -73,12 +73,12 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-} */
+} 
 
 
   // app/api/push/subscribe/route.ts
-
-import { NextRequest, NextResponse } from 'next/server';
+//for multi push notificatio
+/* import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { writeClient } from '@/sanity/lib/write-client';
 
@@ -130,4 +130,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+} */
