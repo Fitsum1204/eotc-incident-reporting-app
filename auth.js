@@ -158,14 +158,17 @@ async jwt({ token, user }) {
 ,
 
 async session({ session, token }) {
+  console.log("ACTIVE SESSION EMAIL:", token.email);
+  console.log("ACTIVE SESSION ROLE:", token.role);
+
   if (session.user) {
     session.user.id = token.id;
     session.user.role = token.role;
     session.user.isAdmin = token.isAdmin ?? false;
   }
+
   return session;
 }
-
 ,
   },
 });
