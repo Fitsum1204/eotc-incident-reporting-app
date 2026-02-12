@@ -1,7 +1,7 @@
 {
     "name": "Incident Reporting App",
     "short_name": "Incident Report",
-    "description": "Report and manage community incidents",
+    "description": "Report and manage community incidents of EOTC",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
