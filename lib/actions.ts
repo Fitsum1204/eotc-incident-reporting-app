@@ -204,7 +204,7 @@ export const createPitch = async (state: any, form: FormData) => {
         roles: ['admin'], // who should receive
         title: '🚨 New Incident Reported',
         body: `${incident.title} at ${incident.location}`,
-        url: `/incident/${incident._id}`,
+        url: `/incidents/${incident._id}`,
         type: 'NEW_INCIDENT',
       });
         //push notification only for admin use this
