@@ -122,28 +122,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
 ,
 
-async jwt({ token, user, account }) {
+
+async jwt({ token, user }) {
   try {
-    // GOOGLE LOGIN
-    if (account?.provider === "google") {
-      const sanityUser = await client
-        .withConfig({ useCdn: false })
-        .fetch(
-          `*[_type == "user" && email == $email][0]`,
-          { email: token.email }
-        );
-
-      token.id = sanityUser._id;
-      token.role = sanityUser.role;
-      token.isAdmin = sanityUser.role === "admin";
-    }
-
-    // CREDENTIALS LOGIN
-    if (account?.provider === "credentials" && user) {
+    // When user logs in first time
+    if (user) {
       token.id = user.id;
       token.role = user.role;
       token.isAdmin = user.role === "admin";
     }
+
+    // 🔥 ALWAYS re-fetch user from Sanity to keep role fresh
+    if (token?.email) {
+      const sanityUser = await client
+        .withConfig({ useCdn: false })
+        .fetch(
+          `*[_type == "user" && email == $email][0]{ _id, role }`,
+          { email: token.email }
+        );
+
+      if (sanityUser) {
+        token.id = sanityUser._id;
+        token.role = sanityUser.role;
+        token.isAdmin = sanityUser.role === "admin";
+      }
+    }
+
   } catch (err) {
     console.error("JWT ERROR:", err);
   }
