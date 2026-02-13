@@ -1,12 +1,28 @@
 // hooks/use-push-notifications.ts
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import {
   requestNotificationPermission,
   getFcmToken,
+  onForegroundMessage,
 } from '@/lib/notifications';
+
+async function saveTokenToServer(token: string): Promise<void> {
+  const response = await fetch('/api/push/subscribe', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    throw new Error(`Failed to save subscription: ${response.status} ${errorBody}`);
+  }
+}
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
@@ -15,29 +31,7 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Check if browser supports notifications
-    if (
-      typeof window !== 'undefined' &&
-      'Notification' in window &&
-      'serviceWorker' in navigator
-    ) {
-      setIsSupported(true);
-      setPermission(Notification.permission);
-      
-      // In FCM, "subscribed" loosely means we have a token and permission is granted.
-      // We don't check a remote API for "isSubscribed" here to keep it simple, 
-      // but we could check if we have a token in local storage or indexedDB (FCM handlers do this).
-      if (Notification.permission === 'granted') {
-        setIsSubscribed(true);
-      }
-      setIsLoading(false);
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const subscribe = async () => {
+  const subscribe = useCallback(async () => {
     if (!isSupported) {
       toast.error('Push notifications are not supported in this browser');
       return false;
@@ -49,38 +43,24 @@ export function usePushNotifications() {
       const hasPermission = await requestNotificationPermission();
 
       if (!hasPermission) {
-        toast.error('Notification permission denied');
         setPermission(Notification.permission);
-        setIsLoading(false);
+        toast.error('Notification permission denied');
         return false;
       }
 
       setPermission('granted');
 
-      // Get FCM Token
       const token = await getFcmToken();
 
       if (!token) {
         toast.error('Failed to get push token');
-        setIsLoading(false);
         return false;
       }
 
-      // Send token to server
-      const response = await fetch('/api/push/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save subscription');
-      }
+      await saveTokenToServer(token);
 
       setIsSubscribed(true);
-      toast.success('Push notifications enabled!');
+      toast.success('Push notifications enabled');
       return true;
     } catch (error) {
       console.error('Error subscribing:', error);
@@ -89,35 +69,86 @@ export function usePushNotifications() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [isSupported]);
+
+  useEffect(() => {
+    const supported =
+      typeof window !== 'undefined' &&
+      'Notification' in window &&
+      'serviceWorker' in navigator;
+
+    setIsSupported(supported);
+
+    if (!supported) {
+      setIsLoading(false);
+      return;
+    }
+
+    const currentPermission = Notification.permission;
+    setPermission(currentPermission);
+
+    let cancelled = false;
+
+    const syncExistingPermission = async () => {
+      if (currentPermission !== 'granted') {
+        if (!cancelled) setIsLoading(false);
+        return;
+      }
+
+      try {
+        const token = await getFcmToken();
+
+        if (token) {
+          await saveTokenToServer(token);
+          if (!cancelled) setIsSubscribed(true);
+        }
+      } catch (error) {
+        console.error('Failed to sync existing push token:', error);
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    };
+
+    syncExistingPermission();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const unsubscribeForeground = onForegroundMessage((payload) => {
+      const data = payload?.data || {};
+      const title = data.title || 'Notification';
+      const body = data.body;
+      toast(title, { description: body });
+    });
+
+    return () => {
+      unsubscribeForeground();
+    };
+  }, []);
 
   const unsubscribe = async () => {
-    // With FCM, unsubscribing usually just means deleting the token or 
-    // simply not sending it to the server anymore.
-    // Real unsubscription from FCM is deleteToken(messaging).
-    // For now, we'll just simulate it UI-wise.
     setIsLoading(true);
     try {
-        // TODO: Call server to delete token mapping
-        setIsSubscribed(false);
-        toast.success('Push notifications disabled');
-        return true;
+      setIsSubscribed(false);
+      toast.success('Push notifications disabled');
+      return true;
     } catch (error) {
-        console.error("Error unsubscribing", error);
-        return false;
+      console.error('Error unsubscribing', error);
+      return false;
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
   const notify = async (
     title: string,
-    options?: { body?: string; tag?: string; data?: any }
+    options?: { body?: string; tag?: string; data?: unknown },
   ) => {
-    // In-app toast
     toast(`${title}`, { description: `${options?.body}` });
 
-    // Browser notification via service worker
     try {
       if (
         Notification.permission === 'granted' &&
