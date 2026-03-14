@@ -88,19 +88,22 @@ export default async function IncidentDetail({params}: {params: Promise<{id:stri
               <div className="bg-white shadow-sm rounded-xl p-5 border border-gray-200">
                 <h2 className="text-xl font-semibold text-gray-900 mb-3">Attachments</h2>
 
-                <div className="space-y-2">att: string | undefined, i: number
-                 {posts.attachments.map((att: string | undefined, i: number) => (
-                <a
-                  key={i}
-                  href={att ?? '#'}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                  className='block text-blue-600 hover:underline'
-                  aria-disabled={!att}
-                >
-                  Attachment {i + 1}
-                </a>
-                  ))}
+                <div className="space-y-2">
+                  {posts.attachments.map((att: { _type?: string; url?: string } | string | undefined, i: number) => {
+                    const url = typeof att === 'string' ? att : (att && typeof (att as { url?: string }).url === 'string' ? (att as { url: string }).url : null);
+                    return (
+                      <a
+                        key={i}
+                        href={url ?? '#'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-blue-600 hover:underline"
+                        aria-disabled={!url}
+                      >
+                        Attachment {i + 1} {typeof att === 'object' && att?._type === 'image' ? '(image)' : '(file)'}
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}

@@ -119,18 +119,34 @@ const IncidentReportForm = () => {
     }
   };
 
+  const MAX_IMAGES = 10;
+
   const handleFilesSelected = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    const fileList = Array.from(files).filter((f) => f.type.startsWith('image/'));
+    if (fileList.length === 0) {
+      toast.error('Please select image files only.');
+      return;
+    }
+    const currentTotal = previews.length + fileList.length;
+    if (currentTotal > MAX_IMAGES) {
+      toast.error(`You can add up to ${MAX_IMAGES} images. You have ${previews.length} and tried to add ${fileList.length}.`);
+      return;
+    }
     setIsCompressing(true);
-    const newPreviews: Preview[] = [];
     try {
-      for (const file of Array.from(files)) {
-        if (!file.type.startsWith('image/')) continue;
-        const processedFile = await compressImage(file);
-        const url = URL.createObjectURL(processedFile);
-        newPreviews.push({ id: `${processedFile.name}-${Date.now()}`, file: processedFile, url });
-      }
-      setPreviews((prev) => [...prev, ...newPreviews]);
+      const compressed = await Promise.all(
+        fileList.map(async (file, index) => {
+          const processedFile = await compressImage(file);
+          const url = URL.createObjectURL(processedFile);
+          return {
+            id: `${processedFile.name}-${Date.now()}-${index}-${Math.random().toString(36).slice(2)}`,
+            file: processedFile,
+            url,
+          };
+        })
+      );
+      setPreviews((prev) => [...prev, ...compressed]);
     } finally {
       setIsCompressing(false);
     }
@@ -196,11 +212,27 @@ const IncidentReportForm = () => {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Attachments (images)</label>
         <div className="border border-dashed border-gray-300 rounded-lg p-4">
-          <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleFilesSelected(e.target.files)} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={(e) => handleFilesSelected(e.target.files)}
+          />
           <div className="flex items-center justify-between">
-            <p className="text-sm text-gray-600">Upload photos or screenshots (optional).</p>
+            <p className="text-sm text-gray-600">
+              Upload one or more photos (optional, max {MAX_IMAGES}). You can select multiple files at once.
+            </p>
             <div className="flex items-center gap-2">
-              <Button type="button" onClick={() => fileInputRef.current?.click()} className="px-3 py-2 text-sm">Choose Files</Button>
+              {previews.length > 0 && (
+                <span className="text-sm text-gray-500">
+                  {previews.length} / {MAX_IMAGES} image{previews.length !== 1 ? 's' : ''}
+                </span>
+              )}
+              <Button type="button" onClick={() => fileInputRef.current?.click()} className="px-3 py-2 text-sm" disabled={previews.length >= MAX_IMAGES}>
+                {previews.length >= MAX_IMAGES ? 'Max reached' : 'Choose Files'}
+              </Button>
               <Button type="button" onClick={() => setPreviews([])} className="px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200" disabled={previews.length === 0}>Clear</Button>
             </div>
           </div>

@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 //import { USER_BY_EMAIL_QUERY } from "./sanity/lib/queries";
 //const ADMIN_EMAILS = ["fitsum1204@gmail.com"];
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET,
   trustHost: true,
   session: {
     strategy: "jwt",

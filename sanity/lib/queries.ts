@@ -58,7 +58,7 @@ export const INCIDENT_QUERY = defineQuery(`*[_type == "incident" && _id == $id][
   "image": coalesce(mainImage.asset->url, attachments[_type == "image"][0].asset->url),
   "attachments": attachments[] {
     _type,
-    "url": coalesce(image.asset->url, asset->url)
+    "url": asset->url
   },
   "author": author->{ _id, name, "image": image.asset->url }
 }
